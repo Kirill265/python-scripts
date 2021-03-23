@@ -46,7 +46,12 @@ def parsing():
         if (sms_parse.index(i)+1) % 4 == 0:
             sms += '\n' + i
         elif (sms_parse.index(i)+2) % 4 == 0:
-            sms += '\nCode: `' + i.replace(' Код — ','') + '`'
+            if i.lower().find('код') != -1:
+                sms += '\nCode: `' + i.replace(' Код — ','') + '`'
+            elif i.lower().find('логин') != -1:
+                sms += '\nLogin: `' + i.replace(' Ваш логин: ','') + '`'
+            else:
+                sms += '\n' + i
         elif (sms_parse.index(i)+3) % 4 == 0:
             sms += '\nDate:' + i
         elif i != '':
