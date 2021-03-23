@@ -26,12 +26,33 @@ def get_text_messages(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
     if call.data == "code":
-        s = requests.get('https://sms-gate-rc.alfaforex.ru/_debug/messages')
-        msg= html2text.HTML2Text().handle(s.text)
-        bot.send_message(call.message.chat.id, msg)
+        #s = requests.get('https://sms-gate-rc.alfaforex.ru/_debug/messages')
+        #msg= html2text.HTML2Text().handle(s.text)
+        msg = parsing()
+        bot.send_message(call.message.chat.id, msg, parse_mode= 'Markdown')
 def smska(message):
+    #s = requests.get('https://sms-gate-rc.alfaforex.ru/_debug/messages')
+    #msg= html2text.HTML2Text().handle(s.text)
+    msg = parsing()
+    bot.send_message(message.chat.id, msg, parse_mode= 'Markdown')
+def parsing():
     s = requests.get('https://sms-gate-rc.alfaforex.ru/_debug/messages')
-    msg= html2text.HTML2Text().handle(s.text)
-    bot.send_message(message.chat.id, msg)
+    d= html2text.HTML2Text().handle(s.text)
+    clear_text = d.replace('#  Latest sent messages\n\nPhone number| Date| Message text  \n---|---|---','')
+    clear_text = clear_text.replace('\n\n','').replace('. ','|').replace('.\n','|').replace('\n',' ').replace('   ','').replace('  ','')
+    sms_parse = clear_text.split('|')
+    sms = ''
+    for i in sms_parse:
+        if (sms_parse.index(i)+1) % 4 == 0:
+            sms += '\n' + i
+        elif (sms_parse.index(i)+2) % 4 == 0:
+            sms += '\nCode: `' + i.replace(' Код — ','') + '`'
+        elif (sms_parse.index(i)+3) % 4 == 0:
+            sms += '\nDate:' + i
+        elif i != '':
+            sms += '\n\nPhone: ' + i
+        else:
+            sms += '\n\nНовых SMS нет.'
+    return sms[2:]
 bot.polling(none_stop=True, interval=0)
 #{ "keyboard": ["SMS CODE"]}
