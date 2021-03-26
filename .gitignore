@@ -130,3 +130,6 @@ dmypy.json
 
 # Trash
 bucket/
+
+# Keys
+*.kdbx

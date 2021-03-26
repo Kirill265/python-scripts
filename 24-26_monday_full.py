@@ -9,12 +9,7 @@ import pymysql
 import psycopg2
 from psycopg2.extras import DictCursor
 from pymysql.cursors import DictCursor
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+from TeamWox import TW_text_file
 import time
 
 def telegram_bot(Report: str):
@@ -520,31 +515,8 @@ Report_24_26 = """[Отчет по агенту 24](https://team.alfaforex.com/s
 telegram_bot(Report_24_26)
 #print(Report_24_26)
 
-driver = webdriver.Firefox()
-driver.get("https://team.alfaforex.com/servicedesk/view/11160")
-login_func = driver.find_element_by_id("id_login")
-login_func.send_keys("Kirill Cherkasov")
-pass_func = driver.find_element_by_name("password")
-pass_func.send_keys("Qwerty123")
-pass_func.send_keys(Keys.RETURN)
-load_checked = 0
-while load_checked == 0:
-    try:
-        iframe = driver.find_elements_by_tag_name('iframe')[0]
-        load_checked = 1
-    except IndexError:
-        time.sleep(2)
-driver.switch_to.frame(iframe)
-new_comment = driver.find_element_by_link_text("Новый комментарий").click()
-attach_files = driver.find_element_by_link_text("Прикрепить файл").click()
-attach1 = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\24-26_weekly\\full\\"+"24, 24a, 24b 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\24-26_weekly\\full\\"+"26a 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
-attach_file = driver.find_element_by_xpath("//input[@type='file']").send_keys(attach1)
-send_button = driver.find_element_by_xpath("//input[@value='Добавить']").click()
-load_checked = 0
-while load_checked == 0:
-    try:
-        find_button = driver.find_element_by_xpath("//input[@value='Добавить']")
-        time.sleep(2)
-    except NoSuchElementException:
-        load_checked = 1
-driver.quit()
+URL_TW = "https://team.alfaforex.com/servicedesk/view/11160"
+message_text = ''
+attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\24-26_weekly\\full\\"+"24, 24a, 24b 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\24-26_weekly\\full\\"+"26a 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
+
+TW_text_file(URL_TW,message_text,attached_file)

@@ -9,12 +9,7 @@ import pymysql
 import psycopg2
 from psycopg2.extras import DictCursor
 from pymysql.cursors import DictCursor
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+from TeamWox import TW_text_file
 import time
 
 def telegram_bot(Report: str):
@@ -70,7 +65,10 @@ sources_utm = """
             'norilsk','norilsk002','norilsk003',
             'novosibirsk','novosibirsk002','novosibirsk003',
             'krasnoiarsk','krasnoiarsk002','krasnoiarsk003',
-            'Ufa','Ufa001','Ufa002','Ufa003','Ya001'
+            'Ufa','Ufa001','Ufa002','Ufa003',
+            'ufa004','ufa005','ufa006','ufa007','ufa008',
+            'pt001','pt002','pt003','pt004','pt005',
+            'Vil','Ya001'
 """
 month_number_dict = {"1":'января',"2":'февраля',"3":'марта',"4":'апреля',"5":'мая',"6":'июня',"7":'июля',"8":'августа',"9":'сентября',"10":'октября',"11":'ноября',"12":'декабря'} 
 now = datetime.datetime.now()
@@ -676,33 +674,9 @@ Report_finexpert = """[Рассчет вознаграждения для Finexp
 
 telegram_bot(Report_finexpert)
 #print(Report_finexpert)
-'''
-driver = webdriver.Firefox()
-driver.get("https://team.alfaforex.com/servicedesk/view/11492")
-login_func = driver.find_element_by_id("id_login")
-login_func.send_keys("Kirill Cherkasov")
-pass_func = driver.find_element_by_name("password")
-pass_func.send_keys("Qwerty123")
-pass_func.send_keys(Keys.RETURN)
-load_checked = 0
-while load_checked == 0:
-    try:
-        iframe = driver.find_elements_by_tag_name('iframe')[0]
-        load_checked = 1
-    except IndexError:
-        time.sleep(2)
-driver.switch_to.frame(iframe)
-new_comment = driver.find_element_by_link_text("Новый комментарий").click()
-attach_files = driver.find_element_by_link_text("Прикрепить файл").click()
-attach1 = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert\\full\\"+"Finexpert 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert\\full\\"+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
-attach_file = driver.find_element_by_xpath("//input[@type='file']").send_keys(attach1)
-send_button = driver.find_element_by_xpath("//input[@value='Добавить']").click()
-load_checked = 0
-while load_checked == 0:
-    try:
-        find_button = driver.find_element_by_xpath("//input[@value='Добавить']")
-        time.sleep(2)
-    except NoSuchElementException:
-        load_checked = 1
-driver.quit()
-'''
+
+URL_TW = "https://team.alfaforex.com/servicedesk/view/11492"
+message_text = ''
+attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert\\full\\"+"Finexpert 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert\\full\\"+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
+
+#TW_text_file(URL_TW,message_text,attached_file)
