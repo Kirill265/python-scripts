@@ -75,7 +75,11 @@ sources_utm = """
 """
 month_number_dict = {"1":'января',"2":'февраля',"3":'марта',"4":'апреля',"5":'мая',"6":'июня',"7":'июля',"8":'августа',"9":'сентября',"10":'октября',"11":'ноября',"12":'декабря'} 
 now = datetime.datetime.now()
-report_date = now - timedelta(days=now.day)
+wday = calendar.weekday(now.year, now.month, now.day)
+if wday in [1,2,3,4,5]:
+    report_date = now - timedelta(days=1)
+else:
+    sys.exit()
 month = month_number_dict[str(report_date.month)]
 if report_date.month < 10:
     sql_month = '0'+str(report_date.month)
@@ -87,7 +91,7 @@ else:
     msg_to_day = str(report_date.day)
 date_from = str(report_date.year)+'-'+sql_month+'-01 00:00:00'
 date_to = str(report_date.year)+'-'+sql_month+'-'+msg_to_day+' 23:59:59'
-direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/Finexpert/full/'
+direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/Finexpert_weekly/full/'
 #os.mkdir(direction+'01-'+str(report_date.day)+' '+month+' '+str(report_date.year))
 #direction += '01-'+str(report_date.day)+' '+month+' '+str(report_date.year)+'/'
 workbook_ = xlsxwriter.Workbook(direction+'Finexpert 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx')
@@ -676,9 +680,9 @@ with my_connection.cursor() as cursor:
 my_connection.close()
 workbook_.close()
 
-Report_finexpert = """[Рассчет вознаграждения для Finexpert](https://team.alfaforex.com/servicedesk/view/11492)
+Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/servicedesk/view/11492)
 
-Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
+Отчетная дата: *"""+msg_to_day+""" """+month+""" """+str(report_date.year)+"""*.
 
 Счетов: *"""+str(j-1)+"""*
 Торговых операций: *"""+str(m-1)+"""*
@@ -690,6 +694,6 @@ telegram_bot(Report_finexpert)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11492"
 message_text = ''
-attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert\\full\\"+"Finexpert 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert\\full\\"+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
+attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert_weekly\\full\\"+"Finexpert 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert_weekly\\full\\"+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
 TW_text_file(URL_TW,message_text,attached_file)

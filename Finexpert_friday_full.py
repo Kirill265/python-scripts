@@ -7,10 +7,13 @@ from datetime import timedelta
 import xlsxwriter
 import pymysql
 import psycopg2
+import openpyxl
 from psycopg2.extras import DictCursor
 from pymysql.cursors import DictCursor
 from TeamWox import TW_text_file
 import time
+from win32com import client
+import win32com
 
 def telegram_bot(Report: str):
     api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
@@ -421,6 +424,11 @@ with Postgre_connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur
     for convertation in convertations:
         convertation_dict[str(convertation["login"])] = {"out":convertation["volume_out"], "in":convertation["volume_in"]}
 Postgre_connection.close()
+workbook_sum.close()
+xl = win32com.client.DispatchEx('Excel.Application')
+xl.Visible = False
+wb = xl.Workbooks.Open(direction+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx")
+wb.Close(True)
 with Postgre_connection_2.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:    
     query = """
             SELECT mt5a."Login"
@@ -522,6 +530,7 @@ with my_connection.cursor() as cursor:
      """
     cursor.execute(query)
     PL_all = cursor.fetchall()
+    wb = openpyxl.load_workbook(direction+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx",data_only=True)
     j = 1
     for PL_one in PL_all:
         j += 1
@@ -550,8 +559,13 @@ with my_connection.cursor() as cursor:
         worksheet_Reward.write(f'D{j}', PL_one["LK"])
         worksheet_Reward.write(f'E{j}', PL_one["Volume_Lots"], number)
         if str(PL_one["Login"]) in login_list:
-            worksheet_Reward.write(f'F{j}', '=SUM(\'[finexpert рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx]'+str(PL_one["Login"])+'\'!$Q:$Q)*1000000/20', usd_volume)
-            worksheet_Reward.write(f'G{j}', '=\'[finexpert рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx]'+str(PL_one["Login"])+'\'!$W$3', rub_reward)
+            sheet = wb[str(PL_one["Login"])]
+            RewardSelected = sheet.cell(row = 3, column = 22).value
+            in_USD = round(RewardSelected*1000000/20,2)
+            worksheet_Reward.write(f'F{j}', '='+str(in_USD), usd_volume)
+            RewardSelected = sheet.cell(row = 3, column = 23).value
+            in_RUB = round(RewardSelected,2)
+            worksheet_Reward.write(f'G{j}', '='+str(in_RUB), rub_reward)
         else:
             worksheet_Reward.write(f'F{j}', 0.00, usd_volume)
             worksheet_Reward.write(f'G{j}', 0.00, rub_reward)
@@ -665,7 +679,6 @@ with my_connection.cursor() as cursor:
         worksheet_Deals.write(f'O{m}', Deal["Currency"])
 my_connection.close()
 workbook_.close()
-workbook_sum.close()
 
 Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/servicedesk/view/11492)
 
@@ -683,4 +696,4 @@ URL_TW = "https://team.alfaforex.com/servicedesk/view/11492"
 message_text = ''
 attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert_weekly\\full\\"+"Finexpert 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert_weekly\\full\\"+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
-#TW_text_file(URL_TW,message_text,attached_file)
+TW_text_file(URL_TW,message_text,attached_file)

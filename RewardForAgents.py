@@ -7,6 +7,11 @@ import xlsxwriter
 import datetime
 #import calendar
 from datetime import timedelta
+from TeamWox import TW_text_file
+import time
+import openpyxl
+from win32com import client
+import win32com
 '''
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
@@ -73,7 +78,7 @@ connection = pymysql.connect(
     cursorclass=DictCursor
 )
 #month = input('Введите месяц для расчета вознаграждения:\t'
-month_number_dict = {"1":'январь',"2":'февраль',"3":'март',"4":'апрель',"5":'май',"6":'июнь',"7":'июль',"8":'август',"9":'сентябрь',"10":'октябрь',"11":'ноябрь',"12":'декабрь'} 
+month_number_dict = {"1":'январь',"2":'февраль',"3":'март',"4":'апрель',"5":'май',"6":'июнь',"7":'июль',"8":'август',"9":'сентябрь',"10":'октябрь',"11":'ноябрь',"12":'декабрь'}
 '''
 flag = False
 while flag == False:
@@ -106,6 +111,7 @@ for percent in utm_txt:
     utm_dict[percent.split(':')[0]] = percent.split(':')[1].split('\n')[0]
 utm_txt.close()
 #direction = explorer.direct()+'/'
+#direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/'
 direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/Agents rewards/'
 os.mkdir(direction+str(report_date.year)+' '+month)
 log_txt = open(direction+str(report_date.year)+' '+month+'/log.txt', 'w')
@@ -185,6 +191,7 @@ with connection.cursor() as cursor:
     k = 1
     k2 = 1
     done_counter = 0
+    attached_utm_files = ""
     for utm_source in utm_sources:
         try:
             utm_dict[utm_source["utm_source"]]
@@ -223,7 +230,6 @@ with connection.cursor() as cursor:
         cursor.execute(query)
         logins = cursor.fetchall()
         i = 1
-        i2 = 1
         for login in logins:
             i += 1
             k += 1
@@ -325,7 +331,7 @@ with connection.cursor() as cursor:
                 worksheet_login.write(f'S{j}', '=Q'+str(j)+'*R'+str(j)+'')
             worksheet_itog.write(f'A{i}',str(login["login"]), border)
             worksheet_itog.write(f'B{i}','=ROUND(\''+worksheet_login.name+'\'!$W$3,2)', rub_border)
-            worksheet_sum.write(f'B{k}',str(login["login"]), border_sum)
+            #worksheet_sum.write(f'B{k}',str(login["login"]), border_sum)
             #worksheet_sum.write(f'C{k}','=\''+direction+month+'/['+utm_source["utm_source"]+' '+month+' 2020.xlsx]'+worksheet_login.name+'\'!$W$3', rub_sum)
             #worksheet_sum.write(f'C{k}','=\'['+utm_source["utm_source"]+' '+month+' 2020.xlsx]'+worksheet_login.name+'\'!$W$3', rub_sum)
             #worksheet_sum.write(f'C{k}','=\''+direction+month+'/['+utm_source["utm_source"]+' '+month+' 2020.xlsx]Итог\'!$B$'+str(i), rub_sum)
@@ -348,11 +354,21 @@ with connection.cursor() as cursor:
             worksheet_currency.write(f'B{i}',currency_rate["value"])
             worksheet_currency.set_column(1, 1, 8)
         workbook.close()
+        xl = win32com.client.DispatchEx('Excel.Application')
+        xl.Visible = False
+        wb = xl.Workbooks.Open(direction+str(report_date.year)+" "+month+"/"+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx")
+        wb.Close(True)
+        wb = openpyxl.load_workbook(direction+str(report_date.year)+" "+month+"/"+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx",data_only=True)
         for login in logins:
-            i2 += 1
             k2 += 1
-            worksheet_sum.write(f'C{k2}','=\'['+utm_source["utm_source"]+' '+month+' '+str(report_date.year)+'.xlsx]Итог\'!$B$'+str(i2), rub_sum)
+            sheet = wb[str(login["login"])]
+            RewardSelected = sheet.cell(row = 3, column = 23).value
+            in_RUB = round(RewardSelected,2)
+            worksheet_sum.write(f'B{k2}',str(login["login"]), border_sum)
+            worksheet_sum.write(f'C{k2}','='+str(in_RUB), rub_sum)
         done_counter += 1
+        attached_utm_files += "\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Agents rewards\\"+str(report_date.year)+" "+month+"\\"+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx"
+        #attached_utm_files += "\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\"+str(report_date.year)+" "+month+"\\"+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx"
         log_txt.write(str(utm_sources.index(utm_source)+1)+') '+utm_source["utm_source"]+': done (USD '+utm_dict[utm_source["utm_source"]]+' / 1000000)\n')
         Report_success += '   '+utm_source["utm_source"]+' ('+utm_dict[utm_source["utm_source"]]+' USD)\n'
 connection.close()
@@ -368,7 +384,7 @@ else:
 *"""+Report_unsuccess[:-2]+"""*
 """
     
-Report_reward = """*Расчет вознаграждения для агентов*
+Report_reward = """[Расчет вознаграждения для агентов](https://team.alfaforex.com/servicedesk/view/11534)
 
 Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
 
@@ -377,3 +393,9 @@ Report_reward = """*Расчет вознаграждения для агент�
 
 telegram_bot(Report_reward)
 #print(Report_reward)
+
+URL_TW = "https://team.alfaforex.com/servicedesk/view/11534"
+message_text = 'За '+month+' '+str(report_date.year)
+attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Agents rewards\\"+str(report_date.year)+" "+month+"\\Суммарное вознаграждение за "+month+" "+str(report_date.year)+".xlsx"+attached_utm_files
+TW_text_file(URL_TW,message_text,attached_file)
+#print(attached_file)
