@@ -14,6 +14,7 @@ from TeamWox import TW_text_file
 import time
 from win32com import client
 import win32com
+import pandas as pd
 
 def telegram_bot(Report: str):
     api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
@@ -425,10 +426,19 @@ with Postgre_connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur
         convertation_dict[str(convertation["login"])] = {"out":convertation["volume_out"], "in":convertation["volume_in"]}
 Postgre_connection.close()
 workbook_sum.close()
+#log_txt = open(direction+'logErr.txt', 'w')
+#log_txt.write('1\n')
 xl = win32com.client.DispatchEx('Excel.Application')
+#log_txt.write('2\n')
 xl.Visible = False
+#log_txt.write('3\n')
 wb = xl.Workbooks.Open(direction+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx")
+#wb = xl.Workbooks.Open("C:/Users/Kirill_Cherkasov/Documents/Reports/Finexpert_weekly/full/finexpert рассчёт 01-01 апреля 2021.xlsx")
+#wb = xl.Workbooks.Open("C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert_weekly\\full\\finexpert рассчёт 01-01 апреля 2021.xlsx")
+#log_txt.write('4\n')
 wb.Close(True)
+#log_txt.write('5\n')
+#log_txt.close()
 with Postgre_connection_2.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:    
     query = """
             SELECT mt5a."Login"
@@ -561,6 +571,7 @@ with my_connection.cursor() as cursor:
         if str(PL_one["Login"]) in login_list:
             sheet = wb[str(PL_one["Login"])]
             RewardSelected = sheet.cell(row = 3, column = 22).value
+            print(RewardSelected)
             in_USD = round(RewardSelected*1000000/20,2)
             worksheet_Reward.write(f'F{j}', '='+str(in_USD), usd_volume)
             RewardSelected = sheet.cell(row = 3, column = 23).value
