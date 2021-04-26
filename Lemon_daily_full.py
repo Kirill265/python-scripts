@@ -9,7 +9,7 @@ import shutil
 from Telegram_report import telegram_bot
 from like_report_finexpert import report_generation
 
-agent = "Finexpert"
+agent = "Lemon"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
 utm_txt = open(direction+'utm_'+agent+'.txt', 'r')
 sources_utm = utm_txt.read()
@@ -18,10 +18,10 @@ utm_txt.close()
 month_number_dict = {"1":'января',"2":'февраля',"3":'марта',"4":'апреля',"5":'мая',"6":'июня',"7":'июля',"8":'августа',"9":'сентября',"10":'октября',"11":'ноября',"12":'декабря'} 
 now = datetime.datetime.now()
 wday = calendar.weekday(now.year, now.month, now.day)
-if wday in [4,5,6]:
-    report_date = now - timedelta(days=(calendar.weekday(now.year, now.month, now.day)-3))
+if wday in [0,1,2,3,4,5]:
+    report_date = now - timedelta(days=1)
 else:
-    report_date = now - timedelta(days=(calendar.weekday(now.year, now.month, now.day)+4))
+    sys.exit()
 month = month_number_dict[str(report_date.month)]
 if report_date.month < 10:
     sql_month = '0'+str(report_date.month)
@@ -40,7 +40,7 @@ if not(os.path.exists(direction)):
 direction = os.path.join(direction, agent)
 if not(os.path.exists(direction)):
     os.mkdir(direction)
-direction = os.path.join(direction, 'weekly')
+direction = os.path.join(direction, 'daily')
 if not(os.path.exists(direction)):
     os.mkdir(direction)
 direction += '\\'
@@ -57,7 +57,7 @@ send_info["sql_month"] = sql_month
 send_info["report_date"] = report_date
 return_info = report_generation(send_info)
 
-Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/servicedesk/view/11492)
+Report_finexpert = """[Отчет по Lemon Group](https://team.alfaforex.com/servicedesk/view/11598)
 
 Отчетная дата: *"""+msg_to_day+""" """+month+""" """+str(report_date.year)+"""*.
 
@@ -69,8 +69,9 @@ Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/ser
 telegram_bot(Report_finexpert)
 #print(Report_finexpert)
 
-URL_TW = "https://team.alfaforex.com/servicedesk/view/11492"
+URL_TW = "https://team.alfaforex.com/servicedesk/view/11598"
 message_text = ''
-attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
+attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
+#+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
 TW_text_file(URL_TW,message_text,attached_file)

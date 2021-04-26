@@ -69,20 +69,21 @@ def report_generation(send_info):
     worksheet_PL.write('C1', 'FIO', bold_blue_)
     worksheet_PL.write('D1', 'UTM', bold_blue_)
     worksheet_PL.write('E1', 'LK', bold_blue_)
-    worksheet_PL.write('F1', 'Currency', bold_blue_)
-    worksheet_PL.write('G1', 'Deposit', bold_blue_)
-    worksheet_PL.write('H1', 'Withdrawal', bold_blue_)
-    worksheet_PL.write('I1', 'Volume Lots', bold_blue_)
-    worksheet_PL.set_column(0, 8, 15)
-    worksheet_PL.write('J1', 'Convertation out', bold_blue_)
-    worksheet_PL.write('K1', 'Convertation in', bold_blue_)
-    worksheet_PL.set_column(9, 10, 18)
-    worksheet_PL.write('L1', 'Equity '+str(report_date.day)+'.'+sql_month, bold_blue_)
-    worksheet_PL.write('M1', 'Balance 1.'+sql_month, bold_blue_)
-    worksheet_PL.write('N1', 'Balance '+str(report_date.day)+'.'+sql_month, bold_blue_)
-    worksheet_PL.set_column(11, 13, 15)
-    worksheet_PL.write('O1', 'P/L (+Commission)', bold_blue_)
-    worksheet_PL.set_column(14, 14, 20)
+    worksheet_PL.write('F1', 'Type', bold_blue_)
+    worksheet_PL.write('G1', 'Currency', bold_blue_)
+    worksheet_PL.write('H1', 'Deposit', bold_blue_)
+    worksheet_PL.write('I1', 'Withdrawal', bold_blue_)
+    worksheet_PL.write('J1', 'Volume Lots', bold_blue_)
+    worksheet_PL.set_column(0, 9, 15)
+    worksheet_PL.write('K1', 'Convertation out', bold_blue_)
+    worksheet_PL.write('L1', 'Convertation in', bold_blue_)
+    worksheet_PL.set_column(10, 11, 18)
+    worksheet_PL.write('M1', 'Equity '+str(report_date.day)+'.'+sql_month, bold_blue_)
+    worksheet_PL.write('N1', 'Balance 1.'+sql_month, bold_blue_)
+    worksheet_PL.write('O1', 'Balance '+str(report_date.day)+'.'+sql_month, bold_blue_)
+    worksheet_PL.set_column(12, 14, 15)
+    worksheet_PL.write('P1', 'P/L (+Commission)', bold_blue_)
+    worksheet_PL.set_column(15, 15, 20)
     worksheet_Reward = workbook_.add_worksheet('Reward')
     worksheet_Reward.set_row(0, 15)
     worksheet_Reward.write('A1', 'Login', bold_blue_)
@@ -134,7 +135,7 @@ def report_generation(send_info):
     worksheet_ML.set_column(0, 3, 15)
     worksheet_ML.write('E1', 'Margin Level '+str(report_date.day)+'.'+sql_month, bold_blue_)
     worksheet_ML.set_column(4, 4, 20)
-    workbook_sum = xlsxwriter.Workbook(direction+agent+' рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx')
+    workbook_sum = xlsxwriter.Workbook(direction+agent.lower()+' рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx')
     border_sum = workbook_sum.add_format({'border': 1,'align': 'center','valign': 'vcenter'})
     rub = workbook_sum.add_format({'num_format': '0.00"₽"'})
     usd = workbook_sum.add_format({'num_format': '"$"0.00'})
@@ -493,6 +494,10 @@ def report_generation(send_info):
                 , CONCAT(ci.last_name_ru,' ',SUBSTRING(ci.first_name_ru,1,1),'.',SUBSTRING(ci.middle_name_ru,1,1),'.') AS 'FIO'
                 , u.utm_source AS 'UTM'
                 , a.customer_id AS 'LK'
+                , CASE
+                    WHEN ag.name LIKE '%Hedge%' THEN 'hedge'
+                    ELSE 'netting'
+                    END AS 'Type'
                 , c.name AS 'Currency'
                 , IFNULL(ROUND(pmd.volume_sum, 2), 0) AS 'Volume_Lots'
                 , IFNULL(ROUND(EquityTo.Equity,2),0) AS Equity_to
@@ -503,7 +508,8 @@ def report_generation(send_info):
                 LEFT JOIN currency c ON a.currency_id = c.id
                 LEFT JOIN customer_individual ci ON a.customer_id = ci.customer_id
                 LEFT JOIN customer_utm cu ON a.customer_id = cu.customer_id
-                LEFT JOIN utm u ON cu.utm_id = u.id 
+                LEFT JOIN utm u ON cu.utm_id = u.id
+                LEFT JOIN account_group ag ON ag.id = a.group_id
                 LEFT JOIN
                 (
                 SELECT platform_mt5_deal.login
@@ -544,20 +550,21 @@ def report_generation(send_info):
             worksheet_PL.write(f'C{j}', PL_one["FIO"])
             worksheet_PL.write(f'D{j}', PL_one["UTM"])
             worksheet_PL.write(f'E{j}', PL_one["LK"])
-            worksheet_PL.write(f'F{j}', PL_one["Currency"])
-            worksheet_PL.write(f'G{j}', OPRDS_PL_dict[str(PL_one["Login"])]["deposit"], number)
-            worksheet_PL.write(f'H{j}', OPRDS_PL_dict[str(PL_one["Login"])]["withdrawal"], number)
-            worksheet_PL.write(f'I{j}', PL_one["Volume_Lots"], number)
+            worksheet_PL.write(f'F{j}', PL_one["Type"])
+            worksheet_PL.write(f'G{j}', PL_one["Currency"])
+            worksheet_PL.write(f'H{j}', OPRDS_PL_dict[str(PL_one["Login"])]["deposit"], number)
+            worksheet_PL.write(f'I{j}', OPRDS_PL_dict[str(PL_one["Login"])]["withdrawal"], number)
+            worksheet_PL.write(f'J{j}', PL_one["Volume_Lots"], number)
             try:
-                worksheet_PL.write(f'J{j}', convertation_dict[str(PL_one["Login"])]["out"], number)
-                worksheet_PL.write(f'K{j}', convertation_dict[str(PL_one["Login"])]["in"], number)
+                worksheet_PL.write(f'K{j}', convertation_dict[str(PL_one["Login"])]["out"], number)
+                worksheet_PL.write(f'L{j}', convertation_dict[str(PL_one["Login"])]["in"], number)
             except KeyError:
-                worksheet_PL.write(f'J{j}', 0.00, number)
                 worksheet_PL.write(f'K{j}', 0.00, number)
-            worksheet_PL.write(f'L{j}', PL_one["Equity_to"], number)
-            worksheet_PL.write(f'M{j}', PL_one["Balance_from"], number)
-            worksheet_PL.write(f'N{j}', PL_one["Balance_to"], number)
-            worksheet_PL.write(f'O{j}', OPRDS_PL_dict[str(PL_one["Login"])]["profit"], number)
+                worksheet_PL.write(f'L{j}', 0.00, number)
+            worksheet_PL.write(f'M{j}', PL_one["Equity_to"], number)
+            worksheet_PL.write(f'N{j}', PL_one["Balance_from"], number)
+            worksheet_PL.write(f'O{j}', PL_one["Balance_to"], number)
+            worksheet_PL.write(f'P{j}', OPRDS_PL_dict[str(PL_one["Login"])]["profit"], number)
             worksheet_Reward.write(f'A{j}', PL_one["Login"])
             worksheet_Reward.write(f'B{j}', PL_one["FIO"])
             worksheet_Reward.write(f'C{j}', PL_one["UTM"])
@@ -616,6 +623,7 @@ def report_generation(send_info):
             worksheet_PL.write(f'M{j}', '-')
             worksheet_PL.write(f'N{j}', '-')
             worksheet_PL.write(f'O{j}', '-')
+            worksheet_PL.write(f'P{j}', '-')
             worksheet_Reward.write(f'A{j}', '-')
             worksheet_Reward.write(f'B{j}', customerID["FIO"])
             worksheet_Reward.write(f'C{j}', customerID["UTM"])

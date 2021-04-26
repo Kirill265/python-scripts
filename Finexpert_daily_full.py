@@ -71,6 +71,6 @@ telegram_bot(Report_finexpert)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11492"
 message_text = ''
-attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\n"+direction+agent+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
+attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
 TW_text_file(URL_TW,message_text,attached_file)
