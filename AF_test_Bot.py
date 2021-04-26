@@ -4,6 +4,7 @@ import time
 import telebot
 from telebot import types
 from Bot_menu_gen import actions
+from keepass import key_pass
 #import logging
 '''
 logger = logging.getLogger('requests')
@@ -13,7 +14,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.WARNING)
 '''
-bot = telebot.TeleBot('1704857689:AAH0CAoHOlccZsEWeHvacUpnPR29Ob7cXAE')
+bot = telebot.TeleBot(key_pass('AF test Bot').password)
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     '''

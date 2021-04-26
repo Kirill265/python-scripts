@@ -1,37 +1,26 @@
-import requests
 import sys
 import os
+import shutil
 import pymysql
 from pymysql.cursors import DictCursor
 import xlsxwriter
 import datetime
-#import calendar
 from datetime import timedelta
 from TeamWox import TW_text_file
 import time
+from Telegram_report import telegram_bot
+from keepass import key_pass
 
-def telegram_bot(Report: str):
-    api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
-    requests.get('https://api.telegram.org/bot{}/sendMessage'.format(api_token), params=dict(
-        chat_id='-1001156138635',
-        parse_mode= 'Markdown',
-        text=Report 
-))
-
-hostname='172.16.1.42'
-portnum = 3307
-username = 'kcherkasov'
-password = '6ne6H7O3ikVUvmDc570AMfmIgTSXZkcOI'
+SQL_DB = 'MySQL DB PROD'
 connection = pymysql.connect(
-    host=hostname,
-    port=portnum,
-    user=username,
-    password=password,
+    host=key_pass(SQL_DB).url[:-5],
+    port=int(key_pass(SQL_DB).url[-4:]),
+    user=key_pass(SQL_DB).username,
+    password=key_pass(SQL_DB).password,
     db='my',
     charset='utf8mb4',
     cursorclass=DictCursor
 )
-#month = input('Введите месяц для расчета вознаграждения:\t'
 month_number_dict = {"1":'январь',"2":'февраль',"3":'март',"4":'апрель',"5":'май',"6":'июнь',"7":'июль',"8":'август',"9":'сентябрь',"10":'октябрь',"11":'ноябрь',"12":'декабрь'}
 now = datetime.datetime.now()
 report_date = now - timedelta(days=now.day)
@@ -42,7 +31,14 @@ else:
     sql_month = str(report_date.month)
 date_from = str(report_date.year)+'-'+sql_month+'-01 00.00.00'
 date_to = str(report_date.year)+'-'+sql_month+'-'+str(report_date.day)+' 23.59.59'
-direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/10af/'
+direction = os.path.dirname(os.path.abspath(__file__))
+direction = os.path.join(direction, 'Reports')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction = os.path.join(direction, '10af')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction += '\\'
 with connection.cursor() as cursor:
     query = """
             SET @@time_zone = \"+3:00\";
@@ -226,6 +222,6 @@ telegram_bot(Report_reward)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11278"
 message_text = ''
-attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\10af\\"+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx"
+attached_file = direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx"
 
 TW_text_file(URL_TW,message_text,attached_file)

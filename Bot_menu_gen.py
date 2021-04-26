@@ -1,5 +1,3 @@
-#token = '1704857689:AAH0CAoHOlccZsEWeHvacUpnPR29Ob7cXAE'
-
 from collections import OrderedDict
 
 from Bot_generator import \

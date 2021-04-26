@@ -9,98 +9,38 @@ import datetime
 from datetime import timedelta
 from TeamWox import TW_text_file
 import time
-'''
-from PyQt5.QtGui     import *
-from PyQt5.QtCore    import *
-from PyQt5.QtWidgets import *
+import shutil
+from Telegram_report import telegram_bot
+from keepass import key_pass
 
-class Form(QMainWindow):
-    def direct(self):
-        return QFileDialog.getExistingDirectory(self,"Укажите путь для сохранения папки с отчетами","")
-
-    def login(self, hostname, port):
-        text, ok = QInputDialog.getText(self, hostname+':'+str(port),'login:')
-        if ok:
-            return text
-        else:
-            return exit()
-    
-    def password(self, username):
-        text, ok = QInputDialog.getText(self, username,'password:')
-        if ok:
-            return text
-        else:
-            return 'Pass'
-        
-    def month(self):
-        text, ok = QInputDialog.getText(self, 'Введите номер отчетного месяца, ','Номер месяца:')
-        if ok:
-            return text
-        else:
-            return exit()
-'''
-def telegram_bot(Report: str):
-    api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
-    requests.get('https://api.telegram.org/bot{}/sendMessage'.format(api_token), params=dict(
-        chat_id='-1001156138635',
-        parse_mode= 'Markdown',
-        text=Report 
-))
-
-hostname='172.16.1.42'
-portnum = 3307
-'''
-app = QApplication(sys.argv)
-explorer = Form()
-flag = False
-while flag == False:
-    username = explorer.login(hostname, portnum)
-    password = explorer.password(username)
-    if password != 'Pass':
-        flag = True
-username = input('login:')
-print('login: ',username,'\n')
-password = input('password: ')
-'''
-username = 'kcherkasov'
-password = '6ne6H7O3ikVUvmDc570AMfmIgTSXZkcOI'
+SQL_DB = 'MySQL DB PROD'
 connection = pymysql.connect(
-    host=hostname,
-    port=portnum,
-    user=username,
-    password=password,
+    host=key_pass(SQL_DB).url[:-5],
+    port=int(key_pass(SQL_DB).url[-4:]),
+    user=key_pass(SQL_DB).username,
+    password=key_pass(SQL_DB).password,
     db='my',
     charset='utf8mb4',
     cursorclass=DictCursor
 )
-#month = input('Введите месяц для расчета вознаграждения:\t'
 month_number_dict = {"1":'январь',"2":'февраль',"3":'март',"4":'апрель',"5":'май',"6":'июнь',"7":'июль',"8":'август',"9":'сентябрь',"10":'октябрь',"11":'ноябрь',"12":'декабрь'} 
-'''
-flag = False
-while flag == False:
-    month_number = explorer.month()
-    if month_number[0] == '0':
-        month_number = month_number[-1]
-    try:
-        month = month_number_dict[month_number]
-        flag = True
-    except KeyError:
-        flag = False
-        print('Попробуйте еще раз.')
-month = 'октябрь'
-'''
 now = datetime.datetime.now()
 report_date = now - timedelta(days=now.day)
 month = month_number_dict[str(report_date.month)]
-#month_from = {"январь":'01',"февраль":'02',"март":'03',"апрель":'04',"май":'05',"июнь":'06',"июль":'07',"август":'08',"сентябрь":'09',"октябрь":'10',"ноябрь":'11',"декабрь":'12'}
-#month_to = {"январь":'01-31',"февраль":'02-28',"март":'03-31',"апрель":'04-30',"май":'05-31',"июнь":'06-30',"июль":'07-31',"август":'08-31',"сентябрь":'09-30',"октябрь":'10-31',"ноябрь":'11-30',"декабрь":'12-31'}
 if report_date.month < 10:
     sql_month = '0'+str(report_date.month)
 else:
     sql_month = str(report_date.month)
 date_from = str(report_date.year)+'-'+sql_month+'-01 00.00.00'
 date_to = str(report_date.year)+'-'+sql_month+'-'+str(report_date.day)+' 23.59.59'
-direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/BRB/'
+direction = os.path.dirname(os.path.abspath(__file__))
+direction = os.path.join(direction, 'Reports')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction = os.path.join(direction, 'BRB')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction += '\\'
 workbook = xlsxwriter.Workbook(direction+'01-'+str(report_date.day)+'.'+sql_month+'.'+str(report_date.year)+'.xlsx')
 workbook.formats[0].set_font_size(8.5)
 workbook.formats[0].set_font_name('Tahoma')
@@ -186,6 +126,6 @@ telegram_bot(Report_BRB)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/10945"
 message_text = ''
-attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\BRB\\"+"01-"+str(report_date.day)+"."+sql_month+"."+str(report_date.year)+".xlsx"
+attached_file = direction+"01-"+str(report_date.day)+"."+sql_month+"."+str(report_date.year)+".xlsx"
 
 TW_text_file(URL_TW,message_text,attached_file)

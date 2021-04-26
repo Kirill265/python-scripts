@@ -9,24 +9,16 @@ import calendar
 from datetime import timedelta
 from TeamWox import TW_text_file
 import time
+import shutil
+from Telegram_report import telegram_bot
+from keepass import key_pass
 
-def telegram_bot(Report: str):
-    api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
-    requests.get('https://api.telegram.org/bot{}/sendMessage'.format(api_token), params=dict(
-        chat_id='-1001156138635',
-        parse_mode= 'Markdown',
-        text=Report 
-))
-
-hostname='172.16.1.42'
-portnum = 3307
-username = 'kcherkasov'
-password = '6ne6H7O3ikVUvmDc570AMfmIgTSXZkcOI'
+SQL_DB = 'MySQL DB PROD'
 connection = pymysql.connect(
-    host=hostname,
-    port=portnum,
-    user=username,
-    password=password,
+    host=key_pass(SQL_DB).url[:-5],
+    port=int(key_pass(SQL_DB).url[-4:]),
+    user=key_pass(SQL_DB).username,
+    password=key_pass(SQL_DB).password,
     db='my',
     charset='utf8mb4',
     cursorclass=DictCursor
@@ -53,7 +45,14 @@ else:
     sql_day_saturday = str(saturday.day) 
 date_from = str(saturday.year)+'-'+sql_month_saturday+'-'+sql_day_saturday+' 00.00.00'
 date_to = str(friday.year)+'-'+sql_month_friday+'-'+sql_day_friday+' 23.59.59'
-direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/Communication/'
+direction = os.path.dirname(os.path.abspath(__file__))
+direction = os.path.join(direction, 'Reports')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction = os.path.join(direction, 'Communication')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction += '\\'
 workbook = xlsxwriter.Workbook(direction+'customers '+str(saturday.year)+'.'+sql_month_saturday+'.'+sql_day_saturday+' - '+str(friday.year)+'.'+sql_month_friday+'.'+sql_day_friday+' with status.xlsx')
 workbook.formats[0].set_font_size(11)
 workbook.formats[0].set_font_name('Calibri')
@@ -166,6 +165,6 @@ telegram_bot(Report_Communicate)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11462"
 message_text = ''
-attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Communication\\"+"customers "+str(saturday.year)+"."+sql_month_saturday+"."+sql_day_saturday+" - "+str(friday.year)+"."+sql_month_friday+"."+sql_day_friday+" with status.xlsx"
+attached_file = direction+"customers "+str(saturday.year)+"."+sql_month_saturday+"."+sql_day_saturday+" - "+str(friday.year)+"."+sql_month_friday+"."+sql_day_friday+" with status.xlsx"
 
 TW_text_file(URL_TW,message_text,attached_file)

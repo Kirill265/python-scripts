@@ -8,24 +8,16 @@ import datetime
 #import calendar
 from datetime import timedelta
 from TeamWox import TW_text_file
+import shutil
+from Telegram_report import telegram_bot
+from keepass import key_pass
 
-def telegram_bot(Report: str):
-    api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
-    requests.get('https://api.telegram.org/bot{}/sendMessage'.format(api_token), params=dict(
-        chat_id='-1001156138635',
-        parse_mode= 'Markdown',
-        text=Report 
-))
-
-hostname='172.16.1.42'
-portnum = 3307
-username = 'kcherkasov'
-password = '6ne6H7O3ikVUvmDc570AMfmIgTSXZkcOI'
+SQL_DB = 'MySQL DB PROD'
 connection = pymysql.connect(
-    host=hostname,
-    port=portnum,
-    user=username,
-    password=password,
+    host=key_pass(SQL_DB).url[:-5],
+    port=int(key_pass(SQL_DB).url[-4:]),
+    user=key_pass(SQL_DB).username,
+    password=key_pass(SQL_DB).password,
     db='my',
     charset='utf8mb4',
     cursorclass=DictCursor
@@ -45,7 +37,14 @@ else:
     msg_to_month = str(report_date.month)
 date_from = str(report_date.year)+'-'+msg_from_month+'-01 00.00.00'
 date_to = str(report_date.year)+'-'+msg_to_month+'-'+str(report_date.day)+' 23.59.59'
-direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/Tickets/'
+direction = os.path.dirname(os.path.abspath(__file__))
+direction = os.path.join(direction, 'Reports')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction = os.path.join(direction, 'Tickets')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction += '\\'
 workbook = xlsxwriter.Workbook(direction+'Тикеты '+str(qarte)+' квартал '+str(report_date.year)+' года.xlsx')
 workbook.formats[0].set_font_size(8.5)
 workbook.formats[0].set_font_name('Tahoma')
@@ -241,6 +240,6 @@ telegram_bot(Report_Tickets)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11230"
 message_text = ''
-attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Tickets\\"+"Тикеты "+str(qarte)+" квартал "+str(report_date.year)+" года.xlsx"
+attached_file = direction+"Тикеты "+str(qarte)+" квартал "+str(report_date.year)+" года.xlsx"
 
 TW_text_file(URL_TW,message_text,attached_file)

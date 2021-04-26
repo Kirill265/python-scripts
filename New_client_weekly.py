@@ -6,35 +6,26 @@ import pymysql
 from pymysql.cursors import DictCursor
 from TeamWox import TW_text_file
 import time
+import os
+from Telegram_report import telegram_bot
+from keepass import key_pass
 
-def telegram_bot(Report: str):
-    api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
-    requests.get('https://api.telegram.org/bot{}/sendMessage'.format(api_token), params=dict(
-        chat_id='-1001156138635',
-        parse_mode= 'Markdown',
-        text=Report 
-))
-
-my_username = 'kcherkasov'
-my_password = '6ne6H7O3ikVUvmDc570AMfmIgTSXZkcOI'
+SQL_DB = 'MySQL DB PROD'
 my_connection = pymysql.connect(
-    host='172.16.1.42',
-    port=3307,
-    user=my_username,
-    password=my_password,
+    host=key_pass(SQL_DB).url[:-5],
+    port=int(key_pass(SQL_DB).url[-4:]),
+    user=key_pass(SQL_DB).username,
+    password=key_pass(SQL_DB).password,
     db='my',
     charset='utf8mb4',
     cursorclass=DictCursor
 )
-
 now = datetime.datetime.now()
 monday = now - timedelta(days=calendar.weekday(now.year, now.month, now.day)) - timedelta(days=7)
 sunday = monday + timedelta(days=6)
 friday = monday + timedelta(days=4)
 date_from = str(monday.year)+'-'+str(monday.month)+'-'+str(monday.day)+' 00:00:00'
 date_to = str(sunday.year)+'-'+str(sunday.month)+'-'+str(sunday.day)+' 23:59:59'
-#print(date_from)
-#print(date_to)
 with my_connection.cursor() as cursor:
     query = """
             SET @@time_zone = "+3:00";

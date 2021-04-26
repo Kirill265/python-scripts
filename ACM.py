@@ -7,94 +7,26 @@ import xlsxwriter
 import datetime
 #import calendar
 from datetime import timedelta
-'''
-from PyQt5.QtGui     import *
-from PyQt5.QtCore    import *
-from PyQt5.QtWidgets import *
+import shutil
+from Telegram_report import telegram_bot
+from keepass import key_pass
 
-class Form(QMainWindow):
-    def direct(self):
-        return QFileDialog.getExistingDirectory(self,"Укажите путь для сохранения папки с отчетами","")
-
-    def login(self, hostname, port):
-        text, ok = QInputDialog.getText(self, hostname+':'+str(port),'login:')
-        if ok:
-            return text
-        else:
-            return exit()
-    
-    def password(self, username):
-        text, ok = QInputDialog.getText(self, username,'password:')
-        if ok:
-            return text
-        else:
-            return 'Pass'
-        
-    def month(self):
-        text, ok = QInputDialog.getText(self, 'Введите номер отчетного месяца','Номер месяца:')
-        if ok:
-            return text
-        else:
-            return exit()
-'''
-
-def telegram_bot(Report: str):
-    api_token = '1362203438:AAFNp5tXRWi6Pn5RkIgqq_7ELHdGTbY9CUs'
-    requests.get('https://api.telegram.org/bot{}/sendMessage'.format(api_token), params=dict(
-        chat_id='-1001156138635',
-        parse_mode= 'Markdown',
-        text=Report 
-))
-
-hostname='10.134.10.100'
-portnum = 3307
-'''
-app = QApplication(sys.argv)
-explorer = Form()
-flag = False
-while flag == False:
-    username = explorer.login(hostname, portnum)
-    password = explorer.password(username)
-    if password != 'Pass':
-        flag = True
-username = input('login:')
-print('login: ',username,'\n')
-password = input('password: ')
-'''
-username = 'tgrineva'
-password = '7J2qSSDnn#XO'
+SQL_DB = 'MySQL DB ACC'
 connection = pymysql.connect(
-    host=hostname,
-    port=portnum,
-    user=username,
-    password=password,
+    host=key_pass(SQL_DB).url[:-5],
+    port=int(key_pass(SQL_DB).url[-4:]),
+    user=key_pass(SQL_DB).username,
+    password=key_pass(SQL_DB).password,
     db='report_new',
     charset='utf8mb4',
     cursorclass=DictCursor
 )
-#month = input('Введите месяц для расчета вознаграждения:\t'
 month_number_dict = {"1":'January',"2":'February',"3":'March',"4":'April',"5":'May',"6":'June',"7":'July',"8":'August',"9":'September',"10":'October',"11":'November',"12":'December'} 
-'''
-flag = False
-while flag == False:
-    month_number = explorer.month()
-    if month_number[0] == '0':
-        month_number = month_number[-1]
-    try:
-        month = month_number_dict[month_number]
-        flag = True
-    except KeyError:
-        flag = False
-        print('Попробуйте еще раз.')
-month = 'October'
-'''
 now = datetime.datetime.now()
 report_date = now - timedelta(days=now.day)
 month = month_number_dict[str(report_date.month)]
 prev_month_date = report_date - timedelta(days=report_date.day)
 month_prev = month_number_dict[str(prev_month_date.month)]
-#month_prev = {"January":'December',"February":'January',"March":'February',"April":'March',"May":'April',"June":'May',"July":'June',"August":'July',"September":'August',"October":'September',"November":'October',"December":'November'}
-#month_dict = {"January":'01',"February":'02',"March":'03',"April":'04',"May":'05',"June":'06',"July":'07',"August":'08',"September":'09',"October":'10',"November":'11',"December":'12'}
 if report_date.month < 10:
     sql_month = '0'+str(report_date.month)
 else:
@@ -103,16 +35,23 @@ if prev_month_date.month < 10:
     sql_month_prev = '0'+str(prev_month_date.month)
 else:
     sql_month_prev = str(prev_month_date.month)
-#day_to = {"January":'31',"February":'28',"March":'31',"April":'30',"May":'31',"June":'30',"July":'31',"August":'31',"September":'30',"October":'31',"November":'30',"December":'31'}
 date_from = str(report_date.year)+'-'+sql_month+'-01 00.00.00'
 date_to = str(report_date.year)+'-'+sql_month+'-'+str(report_date.day)+' 23.59.59'
 date_from_8 = str(report_date.year)+'-'+sql_month+'-'+str(report_date.day)+' 00.00.00'
 date_to_prev = str(prev_month_date.year)+'-'+sql_month_prev+'-'+str(prev_month_date.day)+' 23.59.59'
-#direction = explorer.direct()+'/'
-direction = 'C:/Users/Kirill_Cherkasov/Documents/Reports/ACM/'
-os.mkdir(direction+str(report_date.year)+' '+month)
-log_txt = open(direction+str(report_date.year)+' '+month+'/log.txt', 'w')
-log_txt.write('пользователь: '+username+'\n')
+direction = os.path.dirname(os.path.abspath(__file__))
+direction = os.path.join(direction, 'Reports')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction = os.path.join(direction, 'ACM')
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction = os.path.join(direction, str(report_date.year)+' '+month)
+if not(os.path.exists(direction)):
+    os.mkdir(direction)
+direction += '\\'
+log_txt = open(direction+'log.txt', 'w')
+log_txt.write('пользователь: '+key_pass(SQL_DB).username+'\n')
 log_txt.write('месяц: '+month+'\n')
 log_txt.write('начало расчета: '+str(datetime.datetime.now())+'\n')
 Report_success = ''
@@ -171,7 +110,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     new_accounts = cursor.fetchall()
     if len(new_accounts) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM_New clients_01-'+str(report_date.day)+' '+month[0:3]+' '+str(report_date.year)+'.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM_New clients_01-'+str(report_date.day)+' '+month[0:3]+' '+str(report_date.year)+'.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -241,7 +180,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     summary_report_mt5 = cursor.fetchall()
     if len(summary_report_mt5) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт1_Summary report_MT5.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт1_Summary report_MT5.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -308,7 +247,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     summary_report_mt4 = cursor.fetchall()
     if len(summary_report_mt4) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт1_Summary report_MT4.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт1_Summary report_MT4.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -366,7 +305,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     convertation = cursor.fetchall()
     if len(convertation) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт5_конвертации.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт5_конвертации.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -429,7 +368,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     metals_mt5 = cursor.fetchall()
     if len(metals_mt5) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт2_Отчет по финансовым результатам клиентов (драг металлы).xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт2_Отчет по финансовым результатам клиентов (драг металлы).xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -512,7 +451,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     metals_mt4 = cursor.fetchall()
     if len(metals_mt4) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт2_Отчет по финансовым результатам клиентов (драг металлы) (MT4).xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт2_Отчет по финансовым результатам клиентов (драг металлы) (MT4).xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -585,7 +524,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     cfd_report_mt5 = cursor.fetchall()
     if len(cfd_report_mt5) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт3_Отчет по финансовым результатам клиентов (CFD).xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт3_Отчет по финансовым результатам клиентов (CFD).xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -659,7 +598,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     cfd_report_mt4 = cursor.fetchall()
     if len(cfd_report_mt4) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт3_Отчет по финансовым результатам клиентов (CFD) (MT4).xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт3_Отчет по финансовым результатам клиентов (CFD) (MT4).xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -725,7 +664,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     partners = cursor.fetchall()
     if len(partners) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт 4_Выплаты партнерам.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт 4_Выплаты партнерам.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -809,7 +748,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     pamm_report = cursor.fetchall()
     if len(pamm_report) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт6_Отчет по операциям ПАММ.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт6_Отчет по операциям ПАММ.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -873,7 +812,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     open_positons_mt5 = cursor.fetchall()
     if len(open_positons_mt5) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт8_открытые позиции (MT5).xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт8_открытые позиции (MT5).xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -967,7 +906,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     open_positions_mt4 = cursor.fetchall()
     if len(open_positions_mt4) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт8_открытые позиции (MT4).xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт8_открытые позиции (MT4).xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -1039,7 +978,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     cash_back_report = cursor.fetchall()
     if len(cash_back_report) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт9_Отчет по операциям CASH BACK.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт9_Отчет по операциям CASH BACK.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -1114,7 +1053,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     others_sf = cursor.fetchall()
     if len(others_sf) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_прочие операции (SwapFree).xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_прочие операции (SwapFree).xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -1205,7 +1144,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     others_balance = cursor.fetchall()
     if len(others_balance) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_прочие операции.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_прочие операции.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -1295,7 +1234,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     dividends = cursor.fetchall()
     if len(dividends) != 0:
-        workbook = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт 11_dividend adjustment.xlsx')
+        workbook = xlsxwriter.Workbook(direction+'ACM (margin trading operations)_reports '+str(report_date.year)+'_1-'+str(report_date.day)+' '+month[0:3]+'_пункт 11_dividend adjustment.xlsx')
         workbook.formats[0].set_font_size(8.5)
         workbook.formats[0].set_font_name('Tahoma')
         bold_title = workbook.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})
@@ -1406,7 +1345,7 @@ with connection.cursor() as cursor:
     """
     cursor.execute(query)
     balances = cursor.fetchall()
-    workbook_balance = xlsxwriter.Workbook(direction+str(report_date.year)+' '+month+'/ACM_reports__'+str(report_date.day)+'_'+month[0:3]+'_'+str(report_date.year)+'__Balance.xlsx')
+    workbook_balance = xlsxwriter.Workbook(direction+'ACM_reports__'+str(report_date.day)+'_'+month[0:3]+'_'+str(report_date.year)+'__Balance.xlsx')
     workbook_balance.formats[0].set_font_size(8.5)
     workbook_balance.formats[0].set_font_name('Tahoma')
     bold = workbook_balance.add_format({'bold': True, 'align': 'center','valign': 'vcenter'})

@@ -6,15 +6,14 @@ import pymysql
 from pymysql.cursors import DictCursor
 import xlsxwriter
 import datetime
+#import calendar
 from datetime import timedelta
-from TeamWox import TW_text_file
-from Telegram_report import telegram_bot
-from keepass import key_pass
 import time
-import openpyxl
-from win32com import client
-import win32com
+from keepass import key_pass
 
+utm_source = """
+'10af'
+"""
 SQL_DB = 'MySQL DB PROD'
 connection = pymysql.connect(
     host=key_pass(SQL_DB).url[:-5],
@@ -27,7 +26,8 @@ connection = pymysql.connect(
 )
 month_number_dict = {"1":'январь',"2":'февраль',"3":'март',"4":'апрель',"5":'май',"6":'июнь',"7":'июль',"8":'август',"9":'сентябрь',"10":'октябрь',"11":'ноябрь',"12":'декабрь'}
 now = datetime.datetime.now()
-report_date = now - timedelta(days=now.day)
+report_date = now
+#- timedelta(days=now.day)
 month = month_number_dict[str(report_date.month)]
 if report_date.month < 10:
     sql_month = '0'+str(report_date.month)
@@ -36,46 +36,13 @@ else:
 date_from = str(report_date.year)+'-'+sql_month+'-01 00.00.00'
 date_to = str(report_date.year)+'-'+sql_month+'-'+str(report_date.day)+' 23.59.59'
 direction = os.path.dirname(os.path.abspath(__file__))
-
-utm_txt = open(direction+'\\utm_percentage.txt', 'r')
-utm_dict = {}
-for percent in utm_txt:
-    utm_dict[percent.split(':')[0]] = percent.split(':')[1].split('\n')[0]
-utm_txt.close()
-
 direction = os.path.join(direction, 'Reports')
 if not(os.path.exists(direction)):
     os.mkdir(direction)
-direction = os.path.join(direction, 'Agents rewards')
-if not(os.path.exists(direction)):
-    os.mkdir(direction)
-direction = os.path.join(direction, str(report_date.year)+' '+month)
+direction = os.path.join(direction, 'Current_reward')
 if not(os.path.exists(direction)):
     os.mkdir(direction)
 direction += '\\'
-log_txt = open(direction+'log.txt', 'w')
-log_txt.write('пользователь: '+key_pass(SQL_DB).username+'\n')
-log_txt.write('месяц: '+month+'\n')
-log_txt.write('начало расчета: '+str(datetime.datetime.now())+'\n')
-Report_success = ''
-Report_unsuccess = '   '
-workbook_sum = xlsxwriter.Workbook(direction+'Суммарное вознаграждение за '+month+' '+str(report_date.year)+'.xlsx')
-rub_sum = workbook_sum.add_format({'num_format': '0.00"₽"','border': 1,'align': 'center','valign': 'vcenter'})
-border_sum = workbook_sum.add_format({'border': 1,'align': 'center','valign': 'vcenter'})
-bold_sum = workbook_sum.add_format({'bold': True,'border': 1,'align': 'center','valign': 'vcenter'})
-workbook_sum.formats[0].set_font_size(8.5)
-workbook_sum.formats[0].set_font_name('Tahoma')
-worksheet_sum = workbook_sum.add_worksheet()
-worksheet_sum.set_default_row(12)
-worksheet_sum.set_row(0, 15)
-worksheet_sum.write('A1', 'Агент', bold_sum)
-worksheet_sum.set_column(0, 0, 12)
-worksheet_sum.write('B1', 'Клиент', bold_sum)
-worksheet_sum.set_column(1, 1, 15)
-worksheet_sum.write('C1', 'Сумма за клиента', bold_sum)
-worksheet_sum.set_column(2, 2, 25)
-worksheet_sum.write('D1', 'Итоговая сумма', bold_sum)
-worksheet_sum.set_column(3, 3, 20)
 with connection.cursor() as cursor:
     query = """
             SET @@time_zone = \"+3:00\";
@@ -91,53 +58,12 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     currency_rates = cursor.fetchall()
     query = """
-            SELECT DISTINCT u.utm_source FROM platform_mt5_deal pmd
-            LEFT JOIN account a ON pmd.login = a.login
-            LEFT JOIN customer_utm cu ON a.customer_id = cu.customer_id
-            LEFT JOIN utm u ON cu.utm_id = u.id
-            
-            WHERE pmd.created_at BETWEEN \""""+date_from+"""\" AND \""""+date_to+"""\"
-            and u.utm_source NOT IN ('yandex','google','forex','alfaforex','Forex_Ratings','sravniru',
-            'desktop','recketmc_mobile','Forex-ratings','QuietMedia','OTM','MTS','raitingfx',
-            'yandex_bayan','cpaexchange','beeline','forexru','null','ihodlcom_brokers','rbc_mobile','email','traders-union','infoclub','rns','bank','bank_form','email_mt4web')
-            AND u.utm_source NOT IN ('24','24a','24b','26a','fxclub','10af')
-            AND u.utm_source NOT IN (
-            'finexpert','finexpert005',
-            'orenburg001',
-            'sterlitamak001',
-            'smolensk','smolensk002','smolensk003',
-            'bryansk','bryansk002','bryansk003',
-            'Курск','kursk','kursk002','kursk003',
-            'belgorod','belgorod002','belgorod003',
-            'rostov','rostov002','rostov003',
-            'voronezh002','voronezh002','voronezh003',
-            'kazan','kazan002','kazan003',
-            'ulianovsk','ulianovsk002','ulianovsk003',
-            'toliatti','toliatti002','toliatti003',
-            'samara','samara002','samara003',
-            'ekaterinburg','ekaterinburg002','ekaterinburg003',
-            'norilsk','norilsk002','norilsk003',
-            'novosibirsk','novosibirsk002','novosibirsk003',
-            'krasnoiarsk','krasnoiarsk002','krasnoiarsk003',
-            'Ufa','Ufa001','Ufa002','Ufa003','Ya001'
-            )
-            AND u.utm_source IS NOT NULL;
-            
-            -- WHERE u.utm_source = '214725af'
+            SELECT DISTINCT u.utm_source FROM utm u
+            WHERE u.utm_source = """+utm_source+"""
     """
     cursor.execute(query)
     utm_sources = cursor.fetchall()
-    k = 1
-    k2 = 1
-    done_counter = 0
-    attached_utm_files = ""
     for utm_source in utm_sources:
-        try:
-            utm_dict[utm_source["utm_source"]]
-        except KeyError:
-            log_txt.write(str(utm_sources.index(utm_source)+1)+') '+utm_source["utm_source"]+': не задан процент вознаграждения\n')
-            Report_unsuccess += utm_source["utm_source"]+', '
-            continue
         workbook = xlsxwriter.Workbook(direction+utm_source["utm_source"]+' '+month+' '+str(report_date.year)+'.xlsx')
         rub = workbook.add_format({'num_format': '0.00"₽"'})
         usd = workbook.add_format({'num_format': '"$"0.00'})
@@ -169,9 +95,9 @@ with connection.cursor() as cursor:
         cursor.execute(query)
         logins = cursor.fetchall()
         i = 1
+        done_counter = 0
         for login in logins:
             i += 1
-            k += 1
             worksheet_login = workbook.add_worksheet(str(login["login"]))
             worksheet_login.set_default_row(12)
             worksheet_login.set_row(0, 20)
@@ -216,7 +142,7 @@ with connection.cursor() as cursor:
             worksheet_login.write('U2', 'Вознаграждение без учета коротких сделок')
             worksheet_login.write('U3', 'Вознаграждение с вычетом коротких сделок')
             worksheet_login.set_column(20, 20, 23)
-            worksheet_login.write('V2', '=SUM(L:L)/1000000*'+utm_dict[utm_source["utm_source"]], usd)
+            worksheet_login.write('V2', '=SUM(L:L)/1000000*25', usd)
             worksheet_login.write('V3', '=SUM(Q:Q)', usd)
             worksheet_login.write('W3', '=SUM(S:S)', rub)
             query = """
@@ -265,19 +191,16 @@ with connection.cursor() as cursor:
                 worksheet_login.write(f'N{j}', '=M'+str(j)+'=M'+str(j-1))
                 worksheet_login.write(f'O{j}', '=IF(N'+str(j)+' = TRUE,(G'+str(j)+'-G'+str(j-1)+')*24*60*60,"> 10")')
                 worksheet_login.write(f'P{j}', '=IF(O'+str(j)+'=">10",FALSE,AND(O'+str(j)+'<10,E'+str(j-1)+'<>1,E'+str(j)+'<>0))')
-                worksheet_login.write(f'Q{j}', '=IF(P'+str(j)+' = TRUE,0,L'+str(j)+'/1000000*'+utm_dict[utm_source["utm_source"]]+')')
+                worksheet_login.write(f'Q{j}', '=IF(P'+str(j)+' = TRUE,0,L'+str(j)+'/1000000*25'+')')
                 worksheet_login.write(f'R{j}', '=VLOOKUP(H'+str(j)+',\'Курс ЦБ\'!A:B,2,FALSE)')
                 worksheet_login.write(f'S{j}', '=Q'+str(j)+'*R'+str(j)+'')
             worksheet_itog.write(f'A{i}',str(login["login"]), border)
             worksheet_itog.write(f'B{i}','=ROUND(\''+worksheet_login.name+'\'!$W$3,2)', rub_border)
+            done_counter += 1
         if i == 2:
             worksheet_itog.write('C2','=B2', rub_border)
-            worksheet_sum.write(f'D{k}','=C'+str(k), rub_sum)
-            worksheet_sum.write(f'A{k}',str(utm_source["utm_source"]), border_sum)
         else:
             worksheet_itog.merge_range(f'C2:C{i}','=SUM(B2:B'+str(i)+')', rub_border)
-            worksheet_sum.merge_range(f'D{k-i+2}:D{k}','=SUM(C'+str(k-i+2)+':C'+str(k)+')', rub_sum)
-            worksheet_sum.merge_range(f'A{k-i+2}:A{k}',str(utm_source["utm_source"]), border_sum)
         worksheet_currency = workbook.add_worksheet('Курс ЦБ')
         worksheet_currency.set_default_row(12)
         i = 0
@@ -288,47 +211,4 @@ with connection.cursor() as cursor:
             worksheet_currency.write(f'B{i}',currency_rate["value"])
             worksheet_currency.set_column(1, 1, 8)
         workbook.close()
-        xl = win32com.client.DispatchEx('Excel.Application')
-        xl.Visible = False
-        wb = xl.Workbooks.Open(direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx")
-        wb.Close(True)
-        wb = openpyxl.load_workbook(direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx",data_only=True)
-        for login in logins:
-            k2 += 1
-            sheet = wb[str(login["login"])]
-            RewardSelected = sheet.cell(row = 3, column = 23).value
-            in_RUB = round(RewardSelected,2)
-            worksheet_sum.write(f'B{k2}',str(login["login"]), border_sum)
-            worksheet_sum.write(f'C{k2}','='+str(in_RUB), rub_sum)
-        done_counter += 1
-        attached_utm_files += "\n"+direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx"
-        log_txt.write(str(utm_sources.index(utm_source)+1)+') '+utm_source["utm_source"]+': done (USD '+utm_dict[utm_source["utm_source"]]+' / 1000000)\n')
-        Report_success += '   '+utm_source["utm_source"]+' ('+utm_dict[utm_source["utm_source"]]+' USD)\n'
 connection.close()
-workbook_sum.close()
-log_txt.write('рассчитано для '+str(done_counter)+' агентов из '+ str(len(utm_sources))+'\n')
-log_txt.write('конец расчета: '+str(datetime.datetime.now()))
-log_txt.close()
-if done_counter == len(utm_sources):
-    Report_unsuccess = ''
-else:
-    Report_unsuccess = """
-Для следующих агентов не задан процент вознаграждения:
-*"""+Report_unsuccess[:-2]+"""*
-"""
-    
-Report_reward = """[Расчет вознаграждения для агентов](https://team.alfaforex.com/servicedesk/view/11534)
-
-Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
-
-Рассчитано для *"""+str(done_counter)+""" / """+ str(len(utm_sources))+"""* агентов:
-*"""+Report_success+"""*"""+Report_unsuccess
-
-telegram_bot(Report_reward)
-#print(Report_reward)
-
-URL_TW = "https://team.alfaforex.com/servicedesk/view/11534"
-message_text = 'За '+month+' '+str(report_date.year)
-attached_file = direction+"Суммарное вознаграждение за "+month+" "+str(report_date.year)+".xlsx"+attached_utm_files
-
-TW_text_file(URL_TW,message_text,attached_file)

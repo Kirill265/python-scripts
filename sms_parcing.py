@@ -2,6 +2,7 @@ import requests
 import html2text
 import time
 
+#s = requests.get('https://sms-gate.trunk.alfaforex.dom/_debug/messages')
 s = requests.get('https://sms-gate-rc.alfaforex.ru/_debug/messages')
 d= html2text.HTML2Text().handle(s.text)
 print(s.text)

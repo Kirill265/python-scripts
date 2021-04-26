@@ -6,20 +6,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import InvalidArgumentException
 import time
-
-'''
-URL_TW = "https://team.alfaforex.com/servicedesk/view/11230"
-message_text = 'Текст в СД'
-attached_file = "C:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert_weekly\\full\\"+"Finexpert 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\nC:\\Users\\Kirill_Cherkasov\\Documents\\Reports\\Finexpert_weekly\\full\\"+"finexpert рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
-'''
+from keepass import key_pass
 
 def TW_text_file(URL_TW,message_text,attached_file):
     driver = webdriver.Firefox()
     driver.get(URL_TW)
     login_func = driver.find_element_by_id("id_login")
-    login_func.send_keys("Kirill Cherkasov")
+    login_func.send_keys(key_pass('TW').username)
     pass_func = driver.find_element_by_name("password")
-    pass_func.send_keys("Qwerty123")
+    pass_func.send_keys(key_pass('TW').password)
     pass_func.send_keys(Keys.RETURN)
     load_checked = 0
     while load_checked == 0:
@@ -69,3 +64,4 @@ def TW_text_file(URL_TW,message_text,attached_file):
         except NoSuchElementException:
             load_checked = 1
     driver.quit()
+

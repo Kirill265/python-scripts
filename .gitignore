@@ -133,3 +133,7 @@ bucket/
 
 # Keys
 *.kdbx
+not_password.txt
+
+# Reports
+Reports/

@@ -8,9 +8,14 @@ from datetime import timedelta
 from uuid import uuid4
 from dadata import Dadata
 import json
+from keepass import key_pass
+import os
+import shutil
 
-token = "36f8db837f980187f3fdf679f6bdbf9099b65d59"
-secret = "628fe525ccdbda099cfd7d3bc5b0f89b4c11f228"
+token = key_pass('DaData API').password
+secret = key_pass('DaData secret').password
+
+direction = os.path.dirname(os.path.abspath(__file__))+'\\'
 #Место рождения
 def birthplace(): return Address('ru').city()
 
@@ -45,7 +50,7 @@ def passport():
                 cod = 0
         cod = 0
         while cod != 1:
-            path = "C:\\Users\\Kirill_Cherkasov\\Documents\\Python_scripts\\my_person.json"
+            path = direction+"my_person.json"
             with open(path, encoding="utf-8") as fjson:
                 data = json.load(fjson)
             ufms_code = random.choice(data["ufms_codes"])
@@ -90,7 +95,7 @@ def inn_individual(): return inn(12)
 # ФИО
 def full_name():
     gend = random.randint(0, 1)
-    path = "C:\\Users\\Kirill_Cherkasov\\Documents\\Python_scripts\\my_person.json"
+    path = direction+"my_person.json"
     with open(path, encoding="utf-8") as fjson:
         data = json.load(fjson)
     if gend == 0:
