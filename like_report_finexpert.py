@@ -403,7 +403,7 @@ def report_generation(send_info):
         convertations = cursor.fetchall()
         convertation_dict = {}
         for convertation in convertations:
-            convertation_dict[str(convertation["login"])] = {"out":convertation["volume_out"], "in":convertation["volume_in"]}
+            convertation_dict[str(convertation["login"])] = {"out":convertation["volume_out"], "in":convertation["volume_in"], "reward":0.00}
         query = """
                 SELECT
                 a_to.login AS login	 
@@ -425,7 +425,7 @@ def report_generation(send_info):
         cursor.execute(query)
         convert_reward = cursor.fetchall()
         for conv_reward in convert_reward:
-            if conv_reward["currency"] == 'USD':
+            if conv_reward["currency"] == 'RUB':
                 convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])/2,2)
             else:
                 convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])*float(currency_dict[conv_reward["currency"]][conv_reward["conv_date"]])/2,2)
