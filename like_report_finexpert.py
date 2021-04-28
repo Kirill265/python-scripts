@@ -126,6 +126,18 @@ def report_generation(send_info):
     worksheet_Deals.set_column(13, 13, 13)
     worksheet_Deals.write('O1', 'Currency', bold_blue_)
     worksheet_Deals.set_column(14, 14, 8.5)
+    worksheet_DW = workbook_.add_worksheet('DepositWithdrawal')
+    worksheet_DW.set_row(0, 15)
+    worksheet_DW.write('A1', 'Login', bold_blue_)
+    worksheet_DW.write('B1', 'LK', bold_blue_)
+    worksheet_DW.set_column(0, 1, 15)
+    worksheet_DW.write('C1', 'FIO', bold_blue_)
+    worksheet_DW.set_column(2, 2, 25)
+    worksheet_DW.write('D1', 'Balance before', bold_blue_)
+    worksheet_DW.set_column(3, 3, 20)
+    worksheet_DW.write('E1', 'Deposit / Withdrawal', bold_blue_)
+    worksheet_DW.write('F1', 'Time', bold_blue_)
+    worksheet_DW.set_column(4, 5, 25)
     worksheet_ML = workbook_.add_worksheet('Margin Level')
     worksheet_ML.set_row(0, 15)
     worksheet_ML.write('A1', 'Login', bold_blue_)
@@ -482,6 +494,48 @@ def report_generation(send_info):
         OPRDS_PL_dict = {}
         for OPRDS_PL in OPRDS_plus_PL:
             OPRDS_PL_dict[str(OPRDS_PL["Login"])] = {"deposit":OPRDS_PL["deposit"], "withdrawal":OPRDS_PL["withdrawal"], "profit":OPRDS_PL["profit"]}
+        query = """
+                SELECT "md_over"."Login", mu."State", mu."FirstName", ROUND(("md_over"."Balance" - "md_over"."Profit")::numeric, 2) AS "Balance_before", "md_over"."Profit", "md_over"."TimeMsc"
+                FROM (
+                SELECT md."Login", md."Profit", md."Comment", md."TimeMsc", md."Action"
+                , SUM(md."Profit") OVER(PARTITION BY md."Login" ORDER BY md."TimeMsc") AS "Balance"
+                FROM mt5_deals md
+                ORDER BY md."Login"
+                ) AS "md_over"
+                LEFT JOIN mt5_users mu ON "md_over"."Login" = mu."Login"
+		WHERE "md_over"."Action" = 2
+                AND  "md_over"."TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                AND (
+                "md_over"."Comment" = ''
+                OR
+                "md_over"."Comment" LIKE '%Deposit%'
+                OR
+                "md_over"."Comment" LIKE '%Возврат%'
+                OR
+                "md_over"."Comment" LIKE '%Refund%'
+		OR
+                "md_over"."Comment" LIKE '%Withdrawal%'
+                OR
+                "md_over"."Comment" LIKE '%Удержание%'
+                OR
+                "md_over"."Comment" LIKE '%удержание%'
+                )
+		AND "md_over"."Login" IN (
+		"""+login_for_mt5[:-1]+"""
+		);
+        """
+        cursor.execute(query)
+        DepositAndWithdrawal = cursor.fetchall()
+        s = 1
+        for DandW in DepositAndWithdrawal:
+            s += 1
+            worksheet_DW.write(f'A{s}', DandW["Login"])
+            worksheet_DW.write(f'B{s}', int(DandW["State"]))
+            worksheet_DW.write(f'C{s}', DandW["FirstName"])
+            #worksheet_DW.write(f'C{s}', str(DandW["FirstName"]).split(' ')[0]+" "+str(DandW["FirstName"]).split(' ')[1][:1]+"."+str(DandW["FirstName"]).split(' ')[2][:1]+".")
+            worksheet_DW.write(f'D{s}', DandW["Balance_before"],number)
+            worksheet_DW.write(f'E{s}', DandW["Profit"],number)
+            worksheet_DW.write(f'F{s}', str(str(DandW["TimeMsc"]).split('.')[0]))
     Postgre_connection_2.close()
     with my_connection.cursor() as cursor:
         query = """
@@ -574,17 +628,17 @@ def report_generation(send_info):
                 sheet = wb[str(PL_one["Login"])]
                 RewardSelected = sheet.cell(row = 3, column = 22).value
                 in_USD = round(RewardSelected*1000000/20,2)
-                worksheet_Reward.write(f'F{j}', '='+str(in_USD), usd_volume)
+                worksheet_Reward.write(f'F{j}', '='+str(in_USD), number)
                 RewardSelected = sheet.cell(row = 3, column = 23).value
                 in_RUB = round(RewardSelected,2)
-                worksheet_Reward.write(f'G{j}', '='+str(in_RUB), rub_reward)
+                worksheet_Reward.write(f'G{j}', '='+str(in_RUB), number)
             else:
-                worksheet_Reward.write(f'F{j}', 0.00, usd_volume)
-                worksheet_Reward.write(f'G{j}', 0.00, rub_reward)
+                worksheet_Reward.write(f'F{j}', 0.00, number)
+                worksheet_Reward.write(f'G{j}', 0.00, number)
             try:
-                worksheet_Reward.write(f'H{j}', convertation_dict[str(PL_one["Login"])]["reward"], rub_reward)
+                worksheet_Reward.write(f'H{j}', convertation_dict[str(PL_one["Login"])]["reward"], number)
             except KeyError:
-                worksheet_Reward.write(f'H{j}', 0.00, rub_reward)
+                worksheet_Reward.write(f'H{j}', 0.00, number)
             worksheet_ML.write(f'A{j}', PL_one["Login"])
             worksheet_ML.write(f'B{j}', PL_one["UTM"])
             worksheet_ML.write(f'C{j}', PL_one["LK"])
