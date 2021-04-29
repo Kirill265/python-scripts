@@ -99,7 +99,8 @@ with connection.cursor() as cursor:
             WHERE pmd.created_at BETWEEN \""""+date_from+"""\" AND \""""+date_to+"""\"
             and u.utm_source NOT IN ('yandex','google','forex','alfaforex','Forex_Ratings','sravniru',
             'desktop','recketmc_mobile','Forex-ratings','QuietMedia','OTM','MTS','raitingfx',
-            'yandex_bayan','cpaexchange','beeline','forexru','null','ihodlcom_brokers','rbc_mobile','email','traders-union','infoclub','rns','bank','bank_form','email_mt4web')
+            'yandex_bayan','cpaexchange','beeline','forexru','null','ihodlcom_brokers','rbc_mobile',
+            'email','traders-union','infoclub','rns','bank','bank_form','email_mt4web','twitch','zen','Sendsay')
             AND u.utm_source NOT IN ('24','24a','24b','26a','fxclub','10af')
             AND u.utm_source NOT IN (
             'finexpert','finexpert005',
@@ -110,7 +111,7 @@ with connection.cursor() as cursor:
             'Курск','kursk','kursk002','kursk003',
             'belgorod','belgorod002','belgorod003',
             'rostov','rostov002','rostov003',
-            'voronezh002','voronezh002','voronezh003',
+            'voronezh','voronezh002','voronezh002','voronezh003',
             'kazan','kazan002','kazan003',
             'ulianovsk','ulianovsk002','ulianovsk003',
             'toliatti','toliatti002','toliatti003',
@@ -119,7 +120,10 @@ with connection.cursor() as cursor:
             'norilsk','norilsk002','norilsk003',
             'novosibirsk','novosibirsk002','novosibirsk003',
             'krasnoiarsk','krasnoiarsk002','krasnoiarsk003',
-            'Ufa','Ufa001','Ufa002','Ufa003','Ya001'
+            'Ufa','Ufa001','Ufa002','Ufa003',
+            'ufa004','ufa005','ufa006','ufa007','ufa008',
+            'pt001','pt002','pt003','pt004','pt005',
+            'Vil','Ya001','fxlux'
             )
             AND u.utm_source IS NOT NULL;
             
