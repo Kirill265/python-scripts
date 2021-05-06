@@ -14,7 +14,7 @@
             'ekaterinburg','ekaterinburg002','ekaterinburg003',
             'norilsk','norilsk002','norilsk003',
             'novosibirsk','novosibirsk002','novosibirsk003',
-            'krasnoiarsk','krasnoiarsk002','krasnoiarsk003',
+'krasnoiarsk','krasnoiarsk002','krasnoiarsk003','Krasnoyarsk', 
             'Ufa','Ufa001','Ufa002','Ufa003',
             'ufa004','ufa005','ufa006','ufa007','ufa008',
             'pt001','pt002','pt003','pt004','pt005',

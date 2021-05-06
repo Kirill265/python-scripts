@@ -10,6 +10,8 @@ from psycopg2.extras import DictCursor
 from pymysql.cursors import DictCursor
 import time
 from keepass import key_pass
+from win32com import client
+import win32com
 
 def report_generation(send_info):
     agent = send_info["agent"]
@@ -87,7 +89,7 @@ def report_generation(send_info):
     worksheet_Deals.set_column(2, 3, 12)
     worksheet_Deals.write('E1', 'Time', bold_blue_)
     worksheet_Deals.set_column(4, 4, 20)
-    worksheet_Deals.write('F1', 'Type', bold_blue_)
+    worksheet_Deals.write('F1', 'Action', bold_blue_)
     worksheet_Deals.write('G1', 'Entry', bold_blue_)
     worksheet_Deals.set_column(5, 6, 8.5)
     worksheet_Deals.write('H1', 'Symbol', bold_blue_)
@@ -367,6 +369,10 @@ def report_generation(send_info):
             worksheet_Deals.write(f'O{m}', Deal["Currency"])
     my_connection.close()
     workbook_.close()
+    xl = win32com.client.DispatchEx('Excel.Application')
+    xl.Visible = False
+    wb = xl.Workbooks.Open(direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx")
+    wb.Close(True)
     to_return = {}
     to_return["conv_count"] = str(len(convertations))
     to_return["acc_count"] = str(j-1)

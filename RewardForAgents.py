@@ -310,6 +310,8 @@ with connection.cursor() as cursor:
         Report_success += '   '+utm_source["utm_source"]+' ('+utm_dict[utm_source["utm_source"]]+' USD)\n'
 connection.close()
 workbook_sum.close()
+wb = xl.Workbooks.Open(direction+"Суммарное вознаграждение за "+month+" "+str(report_date.year)+".xlsx")
+wb.Close(True)
 log_txt.write('рассчитано для '+str(done_counter)+' агентов из '+ str(len(utm_sources))+'\n')
 log_txt.write('конец расчета: '+str(datetime.datetime.now()))
 log_txt.close()

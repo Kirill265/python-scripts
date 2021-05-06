@@ -10,10 +10,10 @@ import datetime
 from datetime import timedelta
 import time
 from keepass import key_pass
+from win32com import client
+import win32com
 
-utm_source = """
-'10af'
-"""
+utm_source = "33af"
 SQL_DB = 'MySQL DB PROD'
 connection = pymysql.connect(
     host=key_pass(SQL_DB).url[:-5],
@@ -36,6 +36,13 @@ else:
 date_from = str(report_date.year)+'-'+sql_month+'-01 00.00.00'
 date_to = str(report_date.year)+'-'+sql_month+'-'+str(report_date.day)+' 23.59.59'
 direction = os.path.dirname(os.path.abspath(__file__))
+
+utm_txt = open(direction+'\\utm_percentage.txt', 'r')
+utm_dict = {}
+for percent in utm_txt:
+    utm_dict[percent.split(':')[0]] = percent.split(':')[1].split('\n')[0]
+utm_txt.close()
+
 direction = os.path.join(direction, 'Reports')
 if not(os.path.exists(direction)):
     os.mkdir(direction)
@@ -59,7 +66,7 @@ with connection.cursor() as cursor:
     currency_rates = cursor.fetchall()
     query = """
             SELECT DISTINCT u.utm_source FROM utm u
-            WHERE u.utm_source = """+utm_source+"""
+            WHERE u.utm_source = '"""+utm_source+"""'
     """
     cursor.execute(query)
     utm_sources = cursor.fetchall()
@@ -142,7 +149,7 @@ with connection.cursor() as cursor:
             worksheet_login.write('U2', 'Вознаграждение без учета коротких сделок')
             worksheet_login.write('U3', 'Вознаграждение с вычетом коротких сделок')
             worksheet_login.set_column(20, 20, 23)
-            worksheet_login.write('V2', '=SUM(L:L)/1000000*25', usd)
+            worksheet_login.write('V2', '=SUM(L:L)/1000000*'+utm_dict[utm_source["utm_source"]], usd)
             worksheet_login.write('V3', '=SUM(Q:Q)', usd)
             worksheet_login.write('W3', '=SUM(S:S)', rub)
             query = """
@@ -191,7 +198,7 @@ with connection.cursor() as cursor:
                 worksheet_login.write(f'N{j}', '=M'+str(j)+'=M'+str(j-1))
                 worksheet_login.write(f'O{j}', '=IF(N'+str(j)+' = TRUE,(G'+str(j)+'-G'+str(j-1)+')*24*60*60,"> 10")')
                 worksheet_login.write(f'P{j}', '=IF(O'+str(j)+'=">10",FALSE,AND(O'+str(j)+'<10,E'+str(j-1)+'<>1,E'+str(j)+'<>0))')
-                worksheet_login.write(f'Q{j}', '=IF(P'+str(j)+' = TRUE,0,L'+str(j)+'/1000000*25'+')')
+                worksheet_login.write(f'Q{j}', '=IF(P'+str(j)+' = TRUE,0,L'+str(j)+'/1000000*'+utm_dict[utm_source["utm_source"]]+')')
                 worksheet_login.write(f'R{j}', '=VLOOKUP(H'+str(j)+',\'Курс ЦБ\'!A:B,2,FALSE)')
                 worksheet_login.write(f'S{j}', '=Q'+str(j)+'*R'+str(j)+'')
             worksheet_itog.write(f'A{i}',str(login["login"]), border)
@@ -211,4 +218,8 @@ with connection.cursor() as cursor:
             worksheet_currency.write(f'B{i}',currency_rate["value"])
             worksheet_currency.set_column(1, 1, 8)
         workbook.close()
+        xl = win32com.client.DispatchEx('Excel.Application')
+        xl.Visible = False
+        wb = xl.Workbooks.Open(direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx")
+        wb.Close(True)
 connection.close()

@@ -10,6 +10,8 @@ from TeamWox import TW_text_file
 import time
 from Telegram_report import telegram_bot
 from keepass import key_pass
+from win32com import client
+import win32com
 
 SQL_DB = 'MySQL DB PROD'
 connection = pymysql.connect(
@@ -207,6 +209,10 @@ with connection.cursor() as cursor:
             worksheet_currency.write(f'B{i}',currency_rate["value"])
             worksheet_currency.set_column(1, 1, 8)
         workbook.close()
+        xl = win32com.client.DispatchEx('Excel.Application')
+        xl.Visible = False
+        wb = xl.Workbooks.Open(direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx")
+        wb.Close(True)
 connection.close()
 
 Report_reward = """[Расчет вознаграждения для агента 10af](https://team.alfaforex.com/servicedesk/view/11278)

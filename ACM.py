@@ -10,6 +10,8 @@ from datetime import timedelta
 import shutil
 from Telegram_report import telegram_bot
 from keepass import key_pass
+from win32com import client
+import win32com
 
 SQL_DB = 'MySQL DB ACC'
 connection = pymysql.connect(
@@ -1694,10 +1696,10 @@ with connection.cursor() as cursor:
         worksheet_bycustomer.write(f'U{i}','=VLOOKUP(C'+str(i)+',X:AE,5,0)',format_center)
 connection.close()
 connection = pymysql.connect(
-    host=hostname,
-    port=portnum,
-    user=username,
-    password=password,
+    host=key_pass(SQL_DB).url[:-5],
+    port=int(key_pass(SQL_DB).url[-4:]),
+    user=key_pass(SQL_DB).username,
+    password=key_pass(SQL_DB).password,
     db='af_lk',
     charset='utf8mb4',
     cursorclass=DictCursor
@@ -1781,6 +1783,10 @@ with connection.cursor() as cursor:
         worksheet_bycustomer.write(f'AD{i}',company["contract_number"])
 connection.close()
 workbook_balance.close()
+xl = win32com.client.DispatchEx('Excel.Application')
+xl.Visible = False
+wb = xl.Workbooks.Open(direction+"ACM_reports__"+str(report_date.day)+"_"+month[0:3]+"_"+str(report_date.year)+"__Balance.xlsx")
+wb.Close(True)
 log_txt.write('\tотчет готов\n')
 Report_success += '   Balance (MT4/MT5)\n'
 mt5 += 1
