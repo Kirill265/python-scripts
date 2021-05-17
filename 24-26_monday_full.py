@@ -14,6 +14,7 @@ direction = os.path.dirname(os.path.abspath(__file__))+'\\'
 utm_txt = open(direction+'utm_'+agent+'.txt', 'r')
 sources_utm = utm_txt.read()
 utm_txt.close()
+dir_utm = direction
 
 month_number_dict = {"1":'января',"2":'февраля',"3":'марта',"4":'апреля',"5":'мая',"6":'июня',"7":'июля',"8":'августа',"9":'сентября',"10":'октября',"11":'ноября',"12":'декабря'} 
 now = datetime.datetime.now()
@@ -56,7 +57,7 @@ send_info["report_date"] = report_date
 return_info24 = report_generation(send_info)
 
 agent = "26"
-utm_txt = open(u'utm_'+agent+'.txt', 'r')
+utm_txt = open(dir_utm+'utm_'+agent+'.txt', 'r')
 sources_utm = utm_txt.read()
 utm_txt.close()
 agent26 = "26a"

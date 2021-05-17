@@ -74,4 +74,4 @@ message_text = ''
 attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 #+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
-TW_text_file(URL_TW,message_text,attached_file)
+#TW_text_file(URL_TW,message_text,attached_file)

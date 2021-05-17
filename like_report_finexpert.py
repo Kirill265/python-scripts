@@ -510,7 +510,9 @@ def report_generation(send_info):
         for OPRDS_PL in OPRDS_plus_PL:
             OPRDS_PL_dict[str(OPRDS_PL["Login"])] = {"deposit":OPRDS_PL["deposit"], "withdrawal":OPRDS_PL["withdrawal"], "profit":OPRDS_PL["profit"]}
         query = """
-                SELECT "md_over"."Login", mu."State", mu."FirstName", ROUND(("md_over"."Balance" - "md_over"."Profit")::numeric, 2) AS "Balance_before", "md_over"."Profit", "md_over"."TimeMsc"
+                SELECT "md_over"."Login", mu."State", mu."FirstName"
+                , ROUND(("md_over"."Balance" - "md_over"."Profit")::numeric, 2) AS "Balance_before"
+                , "md_over"."Profit", "md_over"."TimeMsc", DATE("md_over"."TimeMsc") AS date_dw
                 FROM (
                 SELECT md."Login", md."Profit", md."Comment", md."TimeMsc", md."Action"
                 , SUM(md."Profit") OVER(PARTITION BY md."Login" ORDER BY md."TimeMsc") AS "Balance"
@@ -734,9 +736,9 @@ def report_generation(send_info):
                 worksheet_DW.write(f'J{s}', round(float(DandW["Balance_before"]),2),number)
                 worksheet_DW.write(f'K{s}', round(float(DandW["Profit"]),2),number)
             else:
-                worksheet_DW.write(f'I{s}', round(float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][str(DandW["TimeMsc"]).split('.')[0]]),4),rate)
-                worksheet_DW.write(f'J{s}', round(float(DandW["Balance_before"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][str(DandW["TimeMsc"]).split('.')[0]]),2),number)
-                worksheet_DW.write(f'K{s}', round(float(DandW["Profit"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][str(DandW["TimeMsc"]).split('.')[0]]),2),number)
+                worksheet_DW.write(f'I{s}', round(float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),4),rate)
+                worksheet_DW.write(f'J{s}', round(float(DandW["Balance_before"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
+                worksheet_DW.write(f'K{s}', round(float(DandW["Profit"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
         query = """
                 SELECT
                 CONCAT(ci.last_name_ru,' ',SUBSTRING(ci.first_name_ru,1,1),'.',SUBSTRING(ci.middle_name_ru,1,1),'.') AS 'FIO'

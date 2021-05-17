@@ -64,4 +64,3 @@ def TW_text_file(URL_TW,message_text,attached_file):
         except NoSuchElementException:
             load_checked = 1
     driver.quit()
-
