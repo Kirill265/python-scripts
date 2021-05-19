@@ -7,7 +7,7 @@ from TeamWox import TW_text_file
 import time
 import shutil
 from Telegram_report import telegram_bot
-from like_report_finexpert import report_generation
+from like_report_lemon import report_generation
 
 agent = "Lemon"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
@@ -62,6 +62,7 @@ Report_finexpert = """[Отчет по Lemon Group](https://team.alfaforex.com/s
 Отчетная дата: *"""+msg_to_day+""" """+month+""" """+str(report_date.year)+"""*.
 
 Счетов: *"""+return_info["acc_count"]+"""*
+Лидов: *"""+return_info["lead_count"]+"""*
 Торговых операций: *"""+return_info["oper_count"]+"""*
 Конвертирующих счетов: *"""+return_info["conv_count"]+"""*
 Вознаграждение за *"""+return_info["reward_count"]+"""* счетов."""
@@ -74,4 +75,4 @@ message_text = ''
 attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 #+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
-#TW_text_file(URL_TW,message_text,attached_file)
+TW_text_file(URL_TW,message_text,attached_file)

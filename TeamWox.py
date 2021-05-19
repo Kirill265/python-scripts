@@ -27,9 +27,12 @@ def TW_text_file(URL_TW,message_text,attached_file):
     load_checked = 0
     while load_checked == 0:
         try:
-            new_comment = driver.find_element_by_link_text("Новый комментарий").click()
+            #new_comment = driver.find_element_by_link_text("Новый комментарий").click()
+            new_comment = driver.find_element_by_link_text("Новый комментарий")
+            new_comment.location_once_scrolled_into_view
+            new_comment.click()
             load_checked = 1
-        except NoSuchElementException:
+        except (NoSuchElementException,ElementNotInteractableException):
             time.sleep(2)
     load_checked = 0
     while load_checked == 0:
