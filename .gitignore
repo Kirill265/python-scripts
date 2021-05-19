@@ -139,3 +139,6 @@ keepass.py
 
 # Reports
 Reports/
+
+# Bat_files
+*.bat
