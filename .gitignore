@@ -128,12 +128,14 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+
 # Trash
 bucket/
 
 # Keys
 *.kdbx
 not_password.txt
+keepass.py
 
 # Reports
 Reports/
