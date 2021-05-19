@@ -135,6 +135,7 @@ bucket/
 # Keys
 *.kdbx
 not_password.txt
+111.txt
 keepass.py
 
 # Reports
