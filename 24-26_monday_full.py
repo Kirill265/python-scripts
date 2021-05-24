@@ -7,7 +7,7 @@ from TeamWox import TW_text_file
 import time
 import shutil
 from Telegram_report import telegram_bot
-from like_report_24 import report_generation
+from like_report_new_24 import report_generation
 
 agent = "24"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
@@ -73,11 +73,12 @@ Report_24_26 = """[Отчет по агенту 24](https://team.alfaforex.com/s
 26 агент: *"""+return_info26["acc_count"]+"""* счетов
 Конвертирующих счетов: *"""+str(int(return_info24["conv_count"])+int(return_info26["conv_count"]))+"""*"""
 
-telegram_bot(Report_24_26)
+#telegram_bot(Report_24_26)
 #print(Report_24_26)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11160"
 message_text = ''
 attached_file = direction+agent24+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\n"+direction+agent26+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
-TW_text_file(URL_TW,message_text,attached_file)
+#TW_text_file(URL_TW,message_text,attached_file)
+
