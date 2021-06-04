@@ -3,13 +3,12 @@ import os
 import calendar
 import datetime
 from datetime import timedelta
-from TeamWox import TW_text_file
 import time
 import shutil
 from Telegram_report import telegram_bot
-from like_report_lemon import report_generation
+from like_report_finexpert - Liliya_edition import report_generation
 
-agent = "Lemon"
+agent = "Finexpert"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
 utm_txt = open(direction+'utm_'+agent+'.txt', 'r')
 sources_utm = utm_txt.read()
@@ -57,22 +56,14 @@ send_info["sql_month"] = sql_month
 send_info["report_date"] = report_date
 return_info = report_generation(send_info)
 
-Report_finexpert = """[Отчет по Lemon Group](https://team.alfaforex.com/servicedesk/view/11598)
+Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/servicedesk/view/11492)
 
 Отчетная дата: *"""+msg_to_day+""" """+month+""" """+str(report_date.year)+"""*.
 
 Счетов: *"""+return_info["acc_count"]+"""*
-Лидов: *"""+return_info["lead_count"]+"""*
 Торговых операций: *"""+return_info["oper_count"]+"""*
 Конвертирующих счетов: *"""+return_info["conv_count"]+"""*
 Вознаграждение за *"""+return_info["reward_count"]+"""* счетов."""
 
 telegram_bot(Report_finexpert)
 #print(Report_finexpert)
-
-URL_TW = "https://team.alfaforex.com/servicedesk/view/11598"
-message_text = ''
-attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
-#+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
-
-TW_text_file(URL_TW,message_text,attached_file)

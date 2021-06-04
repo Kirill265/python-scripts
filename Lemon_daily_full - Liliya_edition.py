@@ -3,11 +3,10 @@ import os
 import calendar
 import datetime
 from datetime import timedelta
-from TeamWox import TW_text_file
 import time
 import shutil
 from Telegram_report import telegram_bot
-from like_report_lemon import report_generation
+from like_report_lemon - Liliya_edition import report_generation
 
 agent = "Lemon"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
@@ -69,10 +68,3 @@ Report_finexpert = """[Отчет по Lemon Group](https://team.alfaforex.com/s
 
 telegram_bot(Report_finexpert)
 #print(Report_finexpert)
-
-URL_TW = "https://team.alfaforex.com/servicedesk/view/11598"
-message_text = ''
-attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
-#+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
-
-TW_text_file(URL_TW,message_text,attached_file)

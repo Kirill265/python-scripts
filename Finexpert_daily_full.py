@@ -18,7 +18,7 @@ utm_txt.close()
 month_number_dict = {"1":'января',"2":'февраля',"3":'марта',"4":'апреля',"5":'мая',"6":'июня',"7":'июля',"8":'августа',"9":'сентября',"10":'октября',"11":'ноября',"12":'декабря'} 
 now = datetime.datetime.now()
 wday = calendar.weekday(now.year, now.month, now.day)
-if wday in [0,1,2,3,4,5]:
+if wday in [0,1,2,3,4,5] or now.day == 1:
     report_date = now - timedelta(days=1)
 else:
     sys.exit()
