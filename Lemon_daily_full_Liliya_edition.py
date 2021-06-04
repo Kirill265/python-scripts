@@ -6,7 +6,7 @@ from datetime import timedelta
 import time
 import shutil
 from Telegram_report import telegram_bot
-from like_report_lemon - Liliya_edition import report_generation
+from like_report_lemon_Liliya_edition import report_generation
 
 agent = "Lemon"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
