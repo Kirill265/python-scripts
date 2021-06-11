@@ -75,4 +75,4 @@ URL_TW = "https://team.alfaforex.com/servicedesk/view/10999"
 message_text = new_accounts
 attached_file = ""
 
-TW_text_file(URL_TW,message_text,attached_file)
+#TW_text_file(URL_TW,message_text,attached_file)

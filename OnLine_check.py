@@ -1,10 +1,13 @@
-from check_service import check_site
-from check_service import check_sites
-from check_service import check_customer
-from check_service import check_communication
-from check_service import check_mt
+import schedule
+import time
+from check_service import check_all
 
-check_mt()
-check_customer()
-check_communication()
-check_sites()
+def check():
+    Report = check_all()
+    return Report
+
+schedule.every(5).minutes.do(check)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)

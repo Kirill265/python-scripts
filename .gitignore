@@ -143,3 +143,6 @@ Reports/
 
 # Bat_files
 *.bat
+
+#Test_files
+*test*.py

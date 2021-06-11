@@ -25,7 +25,10 @@ connection = pymysql.connect(
 )
 month_number_dict = {"1":'январь',"2":'февраль',"3":'март',"4":'апрель',"5":'май',"6":'июнь',"7":'июль',"8":'август',"9":'сентябрь',"10":'октябрь',"11":'ноябрь',"12":'декабрь'}
 now = datetime.datetime.now()
-report_date = now - timedelta(days=now.day)
+if now.day > 5:
+    report_date = now - timedelta(days=now.day-5)
+else:
+    report_date = now - timedelta(days=now.day)
 month = month_number_dict[str(report_date.month)]
 if report_date.month < 10:
     sql_month = '0'+str(report_date.month)
@@ -122,27 +125,19 @@ with connection.cursor() as cursor:
             worksheet_login.set_column(11, 11, 14)
             worksheet_login.write('M1', 'expert_position_id', bold)
             worksheet_login.set_column(12, 12, 20)
-            worksheet_login.write('N1', 'Одна поза', bold)
-            worksheet_login.set_column(13, 13, 11)
-            worksheet_login.write('O1', 'Длительность позиции', bold)
-            worksheet_login.set_column(14, 14, 15)
-            worksheet_login.write('P1', 'Короткая', bold)
-            worksheet_login.set_column(15, 15, 10)
-            worksheet_login.write('Q1', 'Вознаграждение, USD', bold)
-            worksheet_login.set_column(16, 16, 18)
-            worksheet_login.write('R1', 'Курс USDRUR на дату сделки', bold)
-            worksheet_login.set_column(17, 17, 14)
-            worksheet_login.write('S1', 'Вознаграждение, RUR', bold)
-            worksheet_login.set_column(18, 18, 18)
-            worksheet_login.write('V1', 'USD без округления', bold)
-            worksheet_login.write('W1', 'RUB без округления', bold)
-            worksheet_login.set_column(21, 22, 12)
-            worksheet_login.write('U2', 'Вознаграждение без учета коротких сделок')
-            worksheet_login.write('U3', 'Вознаграждение с вычетом коротких сделок')
-            worksheet_login.set_column(20, 20, 23)
-            worksheet_login.write('V2', '=SUM(L:L)/1000000*25', usd)
-            worksheet_login.write('V3', '=SUM(Q:Q)', usd)
-            worksheet_login.write('W3', '=SUM(S:S)', rub)
+            worksheet_login.write('N1', 'Вознаграждение, USD', bold)
+            worksheet_login.set_column(13, 13, 18)
+            worksheet_login.write('O1', 'Курс USDRUR на дату сделки', bold)
+            worksheet_login.set_column(14, 14, 14)
+            worksheet_login.write('P1', 'Вознаграждение, RUR', bold)
+            worksheet_login.set_column(15, 15, 18)
+            worksheet_login.write('S1', 'USD без округления', bold)
+            worksheet_login.write('T1', 'RUB без округления', bold)
+            worksheet_login.set_column(18, 19, 12)
+            worksheet_login.write('R2', 'Вознаграждение')
+            worksheet_login.set_column(17, 17, 23)
+            worksheet_login.write('S2', '=SUM(N:N)', usd)
+            worksheet_login.write('T2', '=SUM(P:P)', rub)
             query = """
                     SELECT
                     pmd.id
@@ -186,14 +181,11 @@ with connection.cursor() as cursor:
                 worksheet_login.write(f'K{j}', deal["profit"])
                 worksheet_login.write(f'L{j}', deal["volume_usd"])
                 worksheet_login.write(f'M{j}', deal["expert_position_id"])
-                worksheet_login.write(f'N{j}', '=M'+str(j)+'=M'+str(j-1))
-                worksheet_login.write(f'O{j}', '=IF(N'+str(j)+' = TRUE,(G'+str(j)+'-G'+str(j-1)+')*24*60*60,"> 10")')
-                worksheet_login.write(f'P{j}', '=IF(O'+str(j)+'=">10",FALSE,AND(O'+str(j)+'<10,E'+str(j-1)+'<>1,E'+str(j)+'<>0))')
-                worksheet_login.write(f'Q{j}', '=IF(P'+str(j)+' = TRUE,0,L'+str(j)+'/1000000*25'+')')
-                worksheet_login.write(f'R{j}', '=VLOOKUP(H'+str(j)+',\'Курс ЦБ\'!A:B,2,FALSE)')
-                worksheet_login.write(f'S{j}', '=Q'+str(j)+'*R'+str(j)+'')
+                worksheet_login.write(f'N{j}', '=IF(J'+str(j)+'>=11,L'+str(j)+'/1000000*30,L'+str(j)+'/1000000*25)')
+                worksheet_login.write(f'O{j}', '=VLOOKUP(H'+str(j)+',\'Курс ЦБ\'!A:B,2,FALSE)')
+                worksheet_login.write(f'P{j}', '= N'+str(j)+'*O'+str(j)+'')
             worksheet_itog.write(f'A{i}',str(login["login"]), border)
-            worksheet_itog.write(f'B{i}','=ROUND(\''+worksheet_login.name+'\'!$W$3,2)', rub_border)
+            worksheet_itog.write(f'B{i}','=ROUND(\''+worksheet_login.name+'\'!$T$2,2)', rub_border)
             done_counter += 1
         if i == 2:
             worksheet_itog.write('C2','=B2', rub_border)
@@ -230,4 +222,4 @@ URL_TW = "https://team.alfaforex.com/servicedesk/view/11278"
 message_text = ''
 attached_file = direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx"
 
-TW_text_file(URL_TW,message_text,attached_file)
+#TW_text_file(URL_TW,message_text,attached_file)
