@@ -15,7 +15,7 @@ from datetime import timedelta, date, time
 import MetaTrader5 as mt5
 import json
 import re
-from Telegram_alert import telega_alert
+from Telegram_alert import telega_alert, edit_message
 import psutil
 import win32com.client
 
@@ -53,32 +53,32 @@ def check_site(site: str, name = ""):
             response = http.request("https://"+site, 'HEAD')
             if response[0]["status"] != '200':
                 Report = '['+site+'](https://'+site+') - '+response[0]["status"]
-                telega_alert(Report+'\n\n#site')
+                telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
                 return Report
             return '['+site+'](https://'+site+') - '+response[0]["status"]
         except ssl.SSLCertVerificationError:
             Report = '['+site+'](https://'+site+') - '+'Certificate Error'
-            telega_alert(Report+'\n\n#site')
+            telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
             return Report
         except AttributeError:
             Report = '['+site+'](https://'+site+') - '+'SSL Error'
-            telega_alert(Report+'\n\n#site')
+            telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
             return Report
         except TimeoutError:
             Report = '['+site+'](https://'+site+') - '+'Timeout Error'
-            telega_alert(Report+'\n\n#site')
+            telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
             return Report
         except httplib2.RedirectMissingLocation:
             Report = '['+site+'](https://'+site+') - '+'RedirectMissingLocation Error'
-            telega_alert(Report+'\n\n#site')
+            telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
             return Report
         except httplib2.RedirectLimit:
             Report = '['+site+'](https://'+site+') - '+'RedirectLimit Error'
-            telega_alert(Report+'\n\n#site')
+            telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
             return Report
         except httplib2.ServerNotFoundError:
             Report = '['+site+'](https://'+site+') - '+'ServerNotFound Error'
-            telega_alert(Report+'\n\n#site')
+            telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
             return Report
         except httplib2.RelativeURIError:
             Report = '['+site+'](https://'+site+') - '+'RelativeURI Error'
@@ -136,7 +136,7 @@ def check_customer(name = ""):
             """
             cursor.execute(query)
             query = """
-                    SELECT MAX(created_at) as 'date'
+                    SELECT MAX(id) as 'id', MAX(created_at) as 'date'
                     FROM customer
                     ;
             """
@@ -144,10 +144,33 @@ def check_customer(name = ""):
             max_customer = cursor.fetchone()
             last_date = max_customer["date"]
         connection.close()
-        if last_date <= now - timedelta(hours = 1):
-            Report = 'Регистрация больше часа назад:\n'+str(last_date)
-            telega_alert(Report+'\n\n#customer')
+        direction = os.path.dirname(os.path.abspath(__file__))+'\\'
+        path = direction+"monitoring_status.json"
+        with open(path, encoding="utf-8") as fjson:
+            data = json.load(fjson)
+        if last_date <= now - timedelta(hours = 1) - timedelta(minutes = 30):
+            Report = 'Регистрация больше 1.5 часов назад:\n'+str(last_date)
+            if data["customer"]["problem_id"] != str(max_customer["id"]):
+                response = telega_alert(u'\U000026A0'+' '+Report+'\n\n#customer')
+                data["customer"]["problem_id"] = str(max_customer["id"])
+                data["customer"]["message_id"] = str(response.message_id)
+                data["customer"]["text"] = str(Report)
+                jFile = open(path, "w")
+                jFile.write(json.dumps(data))
+                jFile.close()
             return Report
+        Report = 'Регистрации появились:\n'+str(last_date)
+        if data["customer"]["problem_id"] != "0":
+            telega_alert(u'\U00002705'+' '+Report+'\n\n#customer')
+            msg_id = data["customer"]["message_id"]
+            text = data["customer"]["text"]
+            data["customer"]["problem_id"] = "0"
+            data["customer"]["message_id"] = "0"
+            data["customer"]["text"] = "0"
+            jFile = open(path, "w")
+            jFile.write(json.dumps(data))
+            jFile.close()
+            edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#customer'.replace('#','\#'))
         return 'Последняя регистрация:\n'+str(last_date)
     except:
         return '\n\nОшибка в функции *check_customer*'
@@ -171,7 +194,7 @@ def check_account(name = ""):
             """
             cursor.execute(query)
             query = """
-                    SELECT MAX(created_at) as 'date'
+                    SELECT MAX(id) as 'id', MAX(created_at) as 'date'
                     FROM account
                     ;
             """
@@ -179,10 +202,33 @@ def check_account(name = ""):
             max_account = cursor.fetchone()
             last_date = max_account["date"]
         connection.close()
-        if last_date <= now - timedelta(hours = 1):
-            Report = 'Счет создан больше часа назад:\n'+str(last_date)
-            telega_alert(Report+'\n\n#account')
+        direction = os.path.dirname(os.path.abspath(__file__))+'\\'
+        path = direction+"monitoring_status.json"
+        with open(path, encoding="utf-8") as fjson:
+            data = json.load(fjson)
+        if last_date <= now - timedelta(hours = 2) - timedelta(minutes = 30):
+            Report = 'Счет создан больше 2.5 часов назад:\n'+str(last_date)
+            if data["account"]["problem_id"] != str(max_account["id"]):
+                response = telega_alert(u'\U000026A0'+' '+Report+'\n\n#account')
+                data["account"]["problem_id"] = str(max_account["id"])
+                data["account"]["message_id"] = str(response.message_id)
+                data["account"]["text"] = Report
+                jFile = open(path, "w")
+                jFile.write(json.dumps(data))
+                jFile.close()
             return Report
+        Report = 'Счета создаются:\n'+str(last_date)
+        if data["account"]["problem_id"] != "0":
+            telega_alert(u'\U00002705'+' '+Report+'\n\n#account')
+            msg_id = data["account"]["message_id"]
+            text = data["account"]["text"]
+            data["account"]["problem_id"] = "0"
+            data["account"]["message_id"] = "0"
+            data["account"]["text"] = "0"
+            jFile = open(path, "w")
+            jFile.write(json.dumps(data))
+            jFile.close()
+            edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#account'.replace('#','\#'))
         return 'Последнее создание счета:\n'+str(last_date)
     except:
         return '\n\nОшибка в функции *check_account*'
@@ -206,7 +252,7 @@ def check_communication(name = ""):
             """
             cursor.execute(query)
             query = """
-                    SELECT MAX(created_at) as 'date'
+                    SELECT MAX(id) as 'id', MAX(created_at) as 'date'
                     FROM communication
                     ;
             """
@@ -214,10 +260,33 @@ def check_communication(name = ""):
             max_comm = cursor.fetchone()
             last_date = max_comm["date"]
         connection.close()
-        if last_date <= now - timedelta(hours = 1):
-            Report = 'Коммуникация больше часа назад:\n'+str(last_date)
-            telega_alert(Report+'\n\n#communication')
+        direction = os.path.dirname(os.path.abspath(__file__))+'\\'
+        path = direction+"monitoring_status.json"
+        with open(path, encoding="utf-8") as fjson:
+            data = json.load(fjson)
+        if last_date <= now - timedelta(hours = 2) - timedelta(minutes = 30):
+            Report = 'Коммуникация больше 2.5 часов назад:\n'+str(last_date)
+            if data["communication"]["problem_id"] != str(max_comm["id"]):
+                response = telega_alert(u'\U000026A0'+' '+Report+'\n\n#communication')
+                data["communication"]["problem_id"] = str(max_comm["id"])
+                data["communication"]["message_id"] = str(response.message_id)
+                data["communication"]["text"] = Report
+                jFile = open(path, "w")
+                jFile.write(json.dumps(data))
+                jFile.close()
             return Report
+        Report = 'Коммуникации появились:\n'+str(last_date)
+        if data["communication"]["problem_id"] != "0":
+            telega_alert(u'\U00002705'+' '+Report+'\n\n#communication')
+            msg_id = data["communication"]["message_id"]
+            text = data["communication"]["text"]
+            data["communication"]["problem_id"] = "0"
+            data["communication"]["message_id"] = "0"
+            data["communication"]["text"] = "0"
+            jFile = open(path, "w")
+            jFile.write(json.dumps(data))
+            jFile.close()
+            edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#communication'.replace('#','\#'))
         return 'Последняя коммуникация:\n'+str(last_date)
     except:
         return '\n\nОшибка в функции *check_communication*'
@@ -234,7 +303,7 @@ def check_mt(name = ""):
         work_to = re.split(r'[^0-9]', data["to"][0])
         eng_from = datetime.datetime.combine(date(int(work_from[0]),int(work_from[1]),int(work_from[2])), time(int(work_from[3]),int(work_from[4])))
         eng_to = datetime.datetime.combine(date(int(work_to[0]),int(work_to[1]),int(work_to[2])), time(int(work_to[3]),int(work_to[4])))
-        Report = ''
+        Report = 'МТ5:'
         if now >= eng_from and now <= eng_to:
             if name != "":
                 return 'Технические работы на МТ5'
@@ -244,17 +313,17 @@ def check_mt(name = ""):
             user=int(key_pass(Account).username)
             password=key_pass(Account).password
             if not mt5.initialize(login=user, server=alias, password=password):
-                Report += 'Ошибка подключения МТ5:\nInitialize() failed, error code = '+str(mt5.last_error())
+                Report += '\nОшибка подключения:\nInitialize() failed, error code = '+str(mt5.last_error())
                 mt5.shutdown()
+                telega_alert(u'\U0000274C'+' '+Report+'\n\n#mt5')
+                return Report
             else:
                 connect = mt5.terminal_info().connected
                 if connect != True:
-                    Report += '\nНет подключения к МТ5'
+                    Report += '\nНет подключения'
                 trade = mt5.account_info().trade_allowed
                 if trade != True:
-                    Report += '\nНе разрешена торговля для ТС в МТ5'
-                if Report == '':
-                    Report += 'С подключением к МТ5 все ОК!'
+                    Report += '\nНе разрешена торговля для ТС'
                 wday = calendar.weekday(now.year, now.month, now.day)
                 if wday not in [5,6]:
                     if name != "":
@@ -262,10 +331,11 @@ def check_mt(name = ""):
                     for symb in Symbols:
                         Report += tics(symb, now, name)
                 mt5.shutdown()
-        if Report != 'С подключением к МТ5 все ОК!' and name == "":
-            telega_alert(Report+'\n\n#mt5')
+        if Report != 'МТ5:':
+            if name == "":
+                telega_alert(u'\U0000274C'+' '+Report+'\n\n#mt5')
             return Report
-        return Report
+        return Report+'\nПодключение есть.'
     except:
         return '\n\nОшибка в функции *check_mt5*'
 
