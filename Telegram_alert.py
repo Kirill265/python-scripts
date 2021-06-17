@@ -12,3 +12,14 @@ def edit_message(msg_id,Report: str):
     bot = telebot.TeleBot(key_pass('AF Report Bot').password)
     bot.edit_message_text(chat_id=key_pass('AF Service Alert').password,message_id = msg_id,text=Report, parse_mode= 'MarkdownV2')
 
+def reply_message(msg_id,Report: str):
+    bot = telebot.TeleBot(key_pass('AF Report Bot').password)
+    bot.send_message(chat_id = key_pass('AF Service Alert').password, text = Report, parse_mode= 'Markdown', disable_web_page_preview = True, reply_to_message_id = msg_id)
+
+def pin_message(msg_id):
+    bot = telebot.TeleBot(key_pass('AF Report Bot').password)
+    bot.pin_chat_message(chat_id = key_pass('AF Service Alert').password, message_id = msg_id, disable_notification = True)
+
+def unpin_message(msg_id):
+    bot = telebot.TeleBot(key_pass('AF Report Bot').password)
+    bot.unpin_chat_message(chat_id = key_pass('AF Service Alert').password, message_id = msg_id)

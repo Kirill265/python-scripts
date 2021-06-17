@@ -137,6 +137,7 @@ bucket/
 not_password.txt
 111.txt
 keepass.py
+bot_staff_id.json
 
 # Reports
 Reports/

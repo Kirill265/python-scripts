@@ -6,7 +6,7 @@ def check():
     Report = check_all()
     return Report
 
-schedule.every(5).minutes.do(check)
+schedule.every(10).minutes.do(check)
 
 while True:
     schedule.run_pending()

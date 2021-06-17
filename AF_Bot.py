@@ -43,17 +43,17 @@ def get_text_messages(message):
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(*[types.KeyboardButton(_) for _ in actions_check],'Один ресурс','Назад в меню')
         if answer == "Выбери значение из списка":
-            bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode= 'Markdown')
+            bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode= 'Markdown',disable_web_page_preview = True)
         else:
-            bot.send_message(message.chat.id, answer, parse_mode= 'Markdown')
+            bot.send_message(message.chat.id, answer, parse_mode= 'Markdown',disable_web_page_preview = True)
     elif (message.text == "Один ресурс") or (message.text in site_for_check):
         answer = check_site(message.text,'name') if message.text in site_for_check else 'Выбери значение из списка'
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(*site_for_check,'К сервисам','Назад в меню')
         if answer == "Выбери значение из списка":
-            bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode= 'Markdown')
+            bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode= 'Markdown',disable_web_page_preview = True)
         else:
-            bot.send_message(message.chat.id, answer, parse_mode= 'Markdown')
+            bot.send_message(message.chat.id, answer, parse_mode= 'Markdown',disable_web_page_preview = True)
     else:
         bot.send_message(message.from_user.id, "Напиши \"меню\"")
 @bot.callback_query_handler(func=lambda call: True)

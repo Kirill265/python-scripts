@@ -15,7 +15,7 @@ from datetime import timedelta, date, time
 import MetaTrader5 as mt5
 import json
 import re
-from Telegram_alert import telega_alert, edit_message
+from Telegram_alert import telega_alert, edit_message, reply_message, pin_message, unpin_message
 import psutil
 import win32com.client
 
@@ -35,13 +35,12 @@ def tics(symbol: str, now, name = ""):
                 return '\n'+symbol+': за последние 15 минут котировок нет'
         else:
             Report_ticks = ''
-            for i in reversed(range(5)):
-                from_time = now - timedelta(minutes = i+1)
-                to_time = now - timedelta(minutes = i)
-                if not ((to_time.hour == 23 and to_time.minute > 50) or (to_time.hour == 0 and to_time.minute < 10)):
-                    ticks = mt5.copy_ticks_range(symbol, from_time, to_time, mt5.COPY_TICKS_ALL)
-                    if len(ticks) == 0:
-                        Report_ticks += '\n'+symbol+': нет котировок за '+str(from_time.time()).split('.')[0]+' - '+str(to_time.time()).split('.')[0]
+            from_time = now - timedelta(minutes = 5)
+            to_time = now
+            if not ((to_time.hour == 23 and to_time.minute > 50) or (to_time.hour == 0 and to_time.minute <= 12)):
+                ticks = mt5.copy_ticks_range(symbol, from_time, to_time, mt5.COPY_TICKS_ALL)
+                if len(ticks) == 0:
+                    Report_ticks += '\n'+symbol+': нет котировок за '+str(from_time.time()).split('.')[0]+' - '+str(to_time.time()).split('.')[0]
             return Report_ticks
     except:
         return '\n\nОшибка в функции *tics* для: '+symbol
@@ -49,13 +48,16 @@ def tics(symbol: str, now, name = ""):
 def check_site(site: str, name = ""):
     try:
         http = httplib2.Http()
+        now = datetime.datetime.now()
+        if now.hour == 3 and site == "team.alfaforex.com" :
+            return ''
         try:
             response = http.request("https://"+site, 'HEAD')
-            if response[0]["status"] != '200':
+            if not (response[0]["status"] == '200' or ((now.hour == 2 or now.hour == 3 or now.hour == 4) and site == "team.alfaforex.com" and response[0]["status"] != '502')):
                 Report = '['+site+'](https://'+site+') - '+response[0]["status"]
                 telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
                 return Report
-            return '['+site+'](https://'+site+') - '+response[0]["status"]
+            return '['+site+'](https://'+site+') - OK'
         except ssl.SSLCertVerificationError:
             Report = '['+site+'](https://'+site+') - '+'Certificate Error'
             telega_alert(u'\U0000274C'+' '+Report+'\n\n#site')
@@ -148,29 +150,38 @@ def check_customer(name = ""):
         path = direction+"monitoring_status.json"
         with open(path, encoding="utf-8") as fjson:
             data = json.load(fjson)
-        if last_date <= now - timedelta(hours = 1) - timedelta(minutes = 30):
-            Report = 'Регистрация больше 1.5 часов назад:\n'+str(last_date)
+        if last_date <= now - timedelta(hours = 1):
+            Report = 'Регистрация больше часа назад:\n'+str(last_date)
             if data["customer"]["problem_id"] != str(max_customer["id"]):
-                response = telega_alert(u'\U000026A0'+' '+Report+'\n\n#customer')
+                response = telega_alert(u'\U000026A0'+' '+Report+'\n\nАктуально на '+str(now.date())+' '+str(now.time()).split('.')[0]+'\n\n#customer')
+                pin_message(response.message_id)
                 data["customer"]["problem_id"] = str(max_customer["id"])
                 data["customer"]["message_id"] = str(response.message_id)
                 data["customer"]["text"] = str(Report)
                 jFile = open(path, "w")
                 jFile.write(json.dumps(data))
                 jFile.close()
+            else:
+                msg_id = data["customer"]["message_id"]
+                text = data["customer"]["text"]
+                edit_message(msg_id, u'\U000026A0'+text.replace('.','\.').replace('-','\-')+'\n\nАктуально на '+str(now.date()).replace('-','\-')+' '+str(now.time()).split('.')[0]+'\n\n#customer'.replace('#','\#'))
             return Report
         Report = 'Регистрации появились:\n'+str(last_date)
         if data["customer"]["problem_id"] != "0":
-            telega_alert(u'\U00002705'+' '+Report+'\n\n#customer')
             msg_id = data["customer"]["message_id"]
             text = data["customer"]["text"]
+            reply_message(msg_id,u'\U00002705'+' '+Report+'\n\n#customer')
             data["customer"]["problem_id"] = "0"
             data["customer"]["message_id"] = "0"
             data["customer"]["text"] = "0"
             jFile = open(path, "w")
             jFile.write(json.dumps(data))
             jFile.close()
-            edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#customer'.replace('#','\#'))
+            try:
+                unpin_message(msg_id)
+                edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#customer'.replace('#','\#'))
+            except:
+                pass
         return 'Последняя регистрация:\n'+str(last_date)
     except:
         return '\n\nОшибка в функции *check_customer*'
@@ -209,26 +220,35 @@ def check_account(name = ""):
         if last_date <= now - timedelta(hours = 2) - timedelta(minutes = 30):
             Report = 'Счет создан больше 2.5 часов назад:\n'+str(last_date)
             if data["account"]["problem_id"] != str(max_account["id"]):
-                response = telega_alert(u'\U000026A0'+' '+Report+'\n\n#account')
+                response = telega_alert(u'\U000026A0'+' '+Report+'\n\nАктуально на '+str(now.date())+' '+str(now.time()).split('.')[0]+'\n\n#account')
+                pin_message(response.message_id)
                 data["account"]["problem_id"] = str(max_account["id"])
                 data["account"]["message_id"] = str(response.message_id)
                 data["account"]["text"] = Report
                 jFile = open(path, "w")
                 jFile.write(json.dumps(data))
                 jFile.close()
+            else:
+                msg_id = data["account"]["message_id"]
+                text = data["account"]["text"]
+                edit_message(msg_id, u'\U000026A0'+text.replace('.','\.').replace('-','\-')+'\n\nАктуально на '+str(now.date()).replace('-','\-')+' '+str(now.time()).split('.')[0]+'\n\n#account'.replace('#','\#'))
             return Report
         Report = 'Счета создаются:\n'+str(last_date)
         if data["account"]["problem_id"] != "0":
-            telega_alert(u'\U00002705'+' '+Report+'\n\n#account')
             msg_id = data["account"]["message_id"]
             text = data["account"]["text"]
+            reply_message(msg_id,u'\U00002705'+' '+Report+'\n\n#account')
             data["account"]["problem_id"] = "0"
             data["account"]["message_id"] = "0"
             data["account"]["text"] = "0"
             jFile = open(path, "w")
             jFile.write(json.dumps(data))
             jFile.close()
-            edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#account'.replace('#','\#'))
+            try:
+                unpin_message(msg_id)
+                edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#account'.replace('#','\#'))
+            except:
+                pass
         return 'Последнее создание счета:\n'+str(last_date)
     except:
         return '\n\nОшибка в функции *check_account*'
@@ -267,26 +287,35 @@ def check_communication(name = ""):
         if last_date <= now - timedelta(hours = 2) - timedelta(minutes = 30):
             Report = 'Коммуникация больше 2.5 часов назад:\n'+str(last_date)
             if data["communication"]["problem_id"] != str(max_comm["id"]):
-                response = telega_alert(u'\U000026A0'+' '+Report+'\n\n#communication')
+                response = telega_alert(u'\U000026A0'+' '+Report+'\n\nАктуально на '+str(now.date())+' '+str(now.time()).split('.')[0]+'\n\n#communication')
+                pin_message(response.message_id)
                 data["communication"]["problem_id"] = str(max_comm["id"])
                 data["communication"]["message_id"] = str(response.message_id)
                 data["communication"]["text"] = Report
                 jFile = open(path, "w")
                 jFile.write(json.dumps(data))
                 jFile.close()
+            else:
+                msg_id = data["communication"]["message_id"]
+                text = data["communication"]["text"]
+                edit_message(msg_id, u'\U000026A0'+text.replace('.','\.').replace('-','\-')+'\n\nАктуально на '+str(now.date()).replace('-','\-')+' '+str(now.time()).split('.')[0]+'\n\n#communication'.replace('#','\#'))
             return Report
         Report = 'Коммуникации появились:\n'+str(last_date)
         if data["communication"]["problem_id"] != "0":
-            telega_alert(u'\U00002705'+' '+Report+'\n\n#communication')
             msg_id = data["communication"]["message_id"]
             text = data["communication"]["text"]
+            reply_message(msg_id,u'\U00002705'+' '+Report+'\n\n#communication')
             data["communication"]["problem_id"] = "0"
             data["communication"]["message_id"] = "0"
             data["communication"]["text"] = "0"
             jFile = open(path, "w")
             jFile.write(json.dumps(data))
             jFile.close()
-            edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#communication'.replace('#','\#'))
+            try:
+                unpin_message(msg_id)
+                edit_message(msg_id,u'\U000026A0'+' ~'+text.replace('.','\.').replace('-','\-')+'~\n\n#communication'.replace('#','\#'))
+            except:
+                pass
         return 'Последняя коммуникация:\n'+str(last_date)
     except:
         return '\n\nОшибка в функции *check_communication*'
@@ -325,7 +354,7 @@ def check_mt(name = ""):
                 if trade != True:
                     Report += '\nНе разрешена торговля для ТС'
                 wday = calendar.weekday(now.year, now.month, now.day)
-                if wday not in [5,6]:
+                if (wday not in [5,6]) and (name != ""):
                     if name != "":
                         Report += '\n\nПоследние котировки:'
                     for symb in Symbols:
