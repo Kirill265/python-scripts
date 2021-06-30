@@ -132,18 +132,25 @@ dmypy.json
 # Trash
 bucket/
 
+# Cache
+*.pyc
+*__pycache__/
+
 # Keys
 *.kdbx
-not_password.txt
-111.txt
-keepass.py
-bot_staff_id.json
+*not_password.txt
+*111.txt
+*keepass.py
+*bot_staff_id.json
+*bot_guest_id.json
 
 # Reports
 Reports/
+*.xml
 
 # Bat_files
 *.bat
 
 #Test_files
 *test*.py
+Test/
