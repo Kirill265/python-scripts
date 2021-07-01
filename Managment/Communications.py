@@ -159,7 +159,9 @@ Report_Communicate = """[Недельный отчет по коммуникац
 
 Новых клиентов: *"""+str(len(Com_customers))+"""*
 Проверено: *"""+str(Customers_checked["checked"])+"""*
-Без коммуникаций, не проверено: *"""+str(Customers_without["without"])+"""*."""
+Без коммуникаций, не проверено: *"""+str(Customers_without["without"])+"""*.
+
+#Communications"""
 
 telegram_bot(Report_Communicate)
 #print(Report_Communicate)

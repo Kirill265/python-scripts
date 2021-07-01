@@ -234,7 +234,9 @@ Report_Tickets = """[Тикеты](https://team.alfaforex.com/servicedesk/view/1
 
 За """+str(qarte)+""" квартал """+str(report_date.year)+""":
 01."""+msg_from_month+"""."""+str(report_date.year)+""" - """+str(report_date.day)+"""."""+msg_to_month+"""."""+str(report_date.year)+"""
-Всего """+str(j-1)+""" тикетов по """+str(i-2)+""" сотрудникам."""
+Всего """+str(j-1)+""" тикетов по """+str(i-2)+""" сотрудникам.
+
+#Tickets"""
 
 telegram_bot(Report_Tickets)
 #print(Report_Tickets)

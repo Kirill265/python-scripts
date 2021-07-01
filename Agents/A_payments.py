@@ -277,7 +277,9 @@ Report_Apayments = """[Расчет вознаграждения по кнопк
 Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
 
 Торговые операции у *"""+str(len(opers))+""" / """+ str(len(balances))+"""* клиентов.
-Конвертаций *"""+str(len(convertations))+"""* у *"""+str(count_conv["count_cnv"])+""" / """+ str(len(balances))+"""* клиентов."""
+Конвертаций *"""+str(len(convertations))+"""* у *"""+str(count_conv["count_cnv"])+""" / """+ str(len(balances))+"""* клиентов.
+
+#agentApayments"""
 
 telegram_bot(Report_Apayments)
 #print(Report_Apayments)

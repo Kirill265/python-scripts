@@ -61,7 +61,9 @@ def Volume_period(d_from = None, d_to = None, name = ""):
             Report_USD = """[Оборот в USD](https://team.alfaforex.com/servicedesk/view/11459)
 
 За период: """+msg_from_day+"""."""+msg_from_month+""" - """+msg_to_day+"""."""+msg_to_month+""".
-по """+return_info["count_symbol"]+""" инструментам"""
+по """+return_info["count_symbol"]+""" инструментам.
+
+#VolumeUSD"""
 
             telegram_bot(Report_USD)
             #print(Report_USD)

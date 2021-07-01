@@ -60,7 +60,9 @@ Report_VIS = """[Рассчет вознаграждения для VIS](https:/
 
 Счетов: *"""+return_info["acc_count"]+"""*
 Торговых операций: *"""+return_info["oper_count"]+"""*
-Конвертирующих счетов: *"""+return_info["conv_count"]+"""*"""
+Конвертирующих счетов: *"""+return_info["conv_count"]+"""*
+
+#agentVIS"""
 
 telegram_bot(Report_VIS)
 #print(Report_VIS)

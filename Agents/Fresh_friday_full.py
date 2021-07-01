@@ -64,7 +64,9 @@ Report_fresh = """[Отчет по Fresh](https://team.alfaforex.com/servicedesk
 
 Счетов: *"""+return_info["acc_count"]+"""*
 Торговых операций: *"""+return_info["oper_count"]+"""*
-Конвертирующих счетов: *"""+return_info["conv_count"]+"""*"""
+Конвертирующих счетов: *"""+return_info["conv_count"]+"""*
+
+#agentFresh"""
 
 #telegram_bot(Report_fresh)
 #print(Report_fresh)

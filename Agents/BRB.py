@@ -120,7 +120,9 @@ Report_BRB = """[Расчет вознаграждения БРБ](https://team.
 
 Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
 
-Выплата за *"""+str(len(BRB_customers))+"""* клиентов."""
+Выплата за *"""+str(len(BRB_customers))+"""* клиентов.
+
+#agentBRB"""
 
 telegram_bot(Report_BRB)
 #print(Report_BRB)

@@ -28,15 +28,13 @@ month_number_dict = {"1":'январь',"2":'февраль',"3":'март',"4":
 now = datetime.datetime.now()
 if now.day > 15:
     report_date = now - timedelta(days=now.day-15)
+    date_from = str(report_date.year)+'-'+str(report_date.month)+'-01 00.00.00'
+    date_to = str(report_date.year)+'-'+str(report_date.month)+'-'+str(report_date.day)+' 23.59.59'
 else:
     report_date = now - timedelta(days=now.day)
+    date_from = str(report_date.year)+'-'+str(report_date.month)+'-16 00.00.00'
+    date_to = str(report_date.year)+'-'+str(report_date.month)+'-'+str(report_date.day)+' 23.59.59'
 month = month_number_dict[str(report_date.month)]
-if report_date.month < 10:
-    sql_month = '0'+str(report_date.month)
-else:
-    sql_month = str(report_date.month)
-date_from = str(report_date.year)+'-'+sql_month+'-01 00.00.00'
-date_to = str(report_date.year)+'-'+sql_month+'-'+str(report_date.day)+' 23.59.59'
 direction = os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts"
 direction = os.path.join(direction, 'Reports')
 if not(os.path.exists(direction)):
@@ -66,7 +64,7 @@ with connection.cursor() as cursor:
     cursor.execute(query)
     utm_sources = cursor.fetchall()
     for utm_source in utm_sources:
-        workbook = xlsxwriter.Workbook(direction+utm_source["utm_source"]+' '+month+' '+str(report_date.year)+'.xlsx')
+        workbook = xlsxwriter.Workbook(direction+utm_source["utm_source"]+' '+date_from.split(" ")[0].split("-")[-1]+'-'+str(report_date.day)+' '+month+' '+str(report_date.year)+'.xlsx')
         rub = workbook.add_format({'num_format': '0.00"₽"'})
         usd = workbook.add_format({'num_format': '"$"0.00'})
         rub_border = workbook.add_format({'num_format': '0.00"₽"','border': 1,'align': 'center','valign': 'vcenter'})
@@ -204,20 +202,22 @@ with connection.cursor() as cursor:
         workbook.close()
         xl = win32com.client.DispatchEx('Excel.Application')
         xl.Visible = False
-        wb = xl.Workbooks.Open(direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx")
+        wb = xl.Workbooks.Open(direction+utm_source["utm_source"]+' '+date_from.split(" ")[0].split("-")[-1]+"-"+str(report_date.day)+" "+month+" "+str(report_date.year)+".xlsx")
         wb.Close(True)
 connection.close()
 
 Report_reward = """[Расчет вознаграждения для агента 10af](https://team.alfaforex.com/servicedesk/view/11278)
 
-Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
+Отчетный период: """+date_from.split(" ")[0].split("-")[-1]+"""-"""+str(report_date.day)+""" """+month+""" """+str(report_date.year)+""".
 
-Рассчитано для """+str(done_counter)+""" счетов."""
+Рассчитано для """+str(done_counter)+""" счетов.
+
+#agent10af"""
 
 Report_TW = 'За '+month+' '+str(report_date.year)
 
 telegram_bot(Report_reward)
-#print(Report_reward)
+print(Report_reward)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11278"
 message_text = ''

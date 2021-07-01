@@ -72,7 +72,9 @@ Report_24_26 = """[Расчет вознаграждения агента 24](ht
 
 24 агент: *"""+return_info24["acc_count"]+"""* счетов
 26 агент: *"""+return_info26["acc_count"]+"""* счетов
-Конвертирующих счетов: *"""+str(int(return_info24["conv_count"])+int(return_info26["conv_count"]))+"""*"""
+Конвертирующих счетов: *"""+str(int(return_info24["conv_count"])+int(return_info26["conv_count"]))+"""*
+
+#agent24"""
 
 telegram_bot(Report_24_26)
 #print(Report_24_26)

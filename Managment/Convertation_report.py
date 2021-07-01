@@ -194,7 +194,9 @@ def Convert_period(d_from = None, d_to = None, name = ""):
 Объем $ - """+str(round(sum_usd,2))+"""
 Объем с маркапом 0 $ - """+str(round(sum_usd_markup_0,2))+"""
 Объем с маркапом 1 $ - """+str(round(sum_usd_markup_1,2))+"""
-Объем с маркапом 5 $ - """+str(round(sum_usd_markup_5,2))+"""`"""
+Объем с маркапом 5 $ - """+str(round(sum_usd_markup_5,2))+"""`
+
+#Convertations"""
 
             Converts = 'C '+msg_from_day+'.'+msg_from_month+' по '+msg_to_day+'.'+msg_to_month+'<br><br>Всего успешных конвертаций - '+str(all_convert["count"])+'<br><br>Успешных конвертаций клиентов - '+str(customer_convert["count"])+'<br><br>Объем $ - '+str(round(sum_usd,2))+'<br><br>Объем с маркапом 0 $ - '+str(round(sum_usd_markup_0,2))+'<br><br>Объем с маркапом 1 $ - '+str(round(sum_usd_markup_1,2))+'<br><br>Объем с маркапом 5 $ - '+str(round(sum_usd_markup_5,2))
 

@@ -288,7 +288,9 @@ Report_AClub = """[Расчет вознаграждения А-клуб](https:
 Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
 
 Торговые операции у *"""+str(len(opers))+""" / """+ str(len(balances))+"""* клиентов.
-Конвертаций *"""+str(len(convertations))+"""* у *"""+str(count_conv["count_cnv"])+""" / """+ str(len(balances))+"""* клиентов."""
+Конвертаций *"""+str(len(convertations))+"""* у *"""+str(count_conv["count_cnv"])+""" / """+ str(len(balances))+"""* клиентов.
+
+#agentAclub"""
 
 telegram_bot(Report_AClub)
 #print(Report_AClub)

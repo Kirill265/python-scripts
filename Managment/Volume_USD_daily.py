@@ -50,7 +50,9 @@ return_info = volume_USD(send_info)
 Report_USD = """[Оборот в USD](https://team.alfaforex.com/servicedesk/view/11459)
 
 За день: """+msg_day+"""."""+msg_month+""".
-по """+return_info["count_symbol"]+""" инструментам"""
+по """+return_info["count_symbol"]+""" инструментам.
+
+#VolumeUSD"""
 
 telegram_bot(Report_USD)
 #print(Report_USD)

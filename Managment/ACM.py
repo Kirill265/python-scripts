@@ -784,6 +784,33 @@ with connection.cursor() as cursor:
     # 8.1. Open_positions (MT5)
     log_txt.write('8.1. Open_positions (MT5)\n')
     query = """
+            select 
+            pos.PositionId as 'position',
+            pos.Login as 'login',
+            IF(pos.Action=0,"buy","sell") as 'type',
+            pos.Symbol as 'symbol',
+            round(pos.Vol/10000,2) as 'volume',
+            DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(pos.TimeCreateMs/1000 - 3600, 0) SECOND) as 'timecreate',
+            pos.Storage as 'storage',
+            pos.Profit as 'profit',
+            if(usg.GroupName like '%EUR%','EUR',
+            if( usg.GroupName like '%RUR%','RUR',
+            if( usg.GroupName like '%CHF%','CHF',
+            if( usg.GroupName like '%GBP%','GBP',
+            if( usg.GroupName like '%JPY%','JPY',
+            'USD'))))) as 'currency',
+            usg.State as 'State',
+            usg.ZipCode as 'ZipCode',
+            usg.GroupName as 'Group',
+            pos.PriceOpen as 'priceopen',
+            pos.PriceCurrent as 'pricecurrent',
+            DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(ev.TimestampMs/1000 - 3600, 0) SECOND) as 'snapshot_at'
+            from mt.mt5positiondaily pos
+            join mt.mt5events ev on ev.HKey = pos.HKey and ev.LKey = pos.LKey
+            join mt.mt5user_actual_state usg on usg.Login = pos.Login
+            WHERE DATE(DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(ev.TimestampMs/1000 - 3600, 0) SECOND)) = DATE('"""+date_to+"""')
+    """
+    '''
             SELECT mt5_positions_daily.position_id
             ,mt5_positions_daily.login
             ,CASE
@@ -811,7 +838,7 @@ with connection.cursor() as cursor:
             left join report_new.mt5_users_view mu on mu.login=mt5_positions_daily.login
             where mt5_positions_daily.snapshot_at BETWEEN '"""+date_from_8+"""' and '"""+date_to+"""'
             and mu.`Group` not LIKE '%TEST%';
-    """
+    '''
     cursor.execute(query)
     open_positons_mt5 = cursor.fetchall()
     if len(open_positons_mt5) != 0:
@@ -822,7 +849,7 @@ with connection.cursor() as cursor:
         worksheet = workbook.add_worksheet()
         worksheet.set_default_row(15)
         worksheet.set_row(0, 25)
-        worksheet.write('A1','position_id', bold_title)
+        worksheet.write('A1','position', bold_title)
         worksheet.set_column(0, 0, 12)
         worksheet.write('B1','login', bold_title)
         worksheet.set_column(1, 1, 8)
@@ -850,7 +877,7 @@ with connection.cursor() as cursor:
         i = 1
         for openpos_mt5 in open_positons_mt5:
             i += 1
-            worksheet.write(f'A{i}',openpos_mt5["position_id"])
+            worksheet.write(f'A{i}',openpos_mt5["position"])
             worksheet.write(f'B{i}',openpos_mt5["login"])
             worksheet.write(f'C{i}',openpos_mt5["type"])
             worksheet.write(f'D{i}',openpos_mt5["symbol"])
@@ -1560,15 +1587,15 @@ with connection.cursor() as cursor:
     worksheet_bylogin.write('P9', currency_sum_balance["balance"], number_center)
     #3 Профит и свопы на конец месяца
     query = """
-            SELECT 
-            mt5_positions_daily.login
-            ,SUM(mt5_positions_daily.storage) + SUM(mt5_positions_daily.profit) AS sum_profit_storage
-            ,mu.state 
-            FROM custom.mt5_positions_daily
-            left join report_new.mt5_users_view mu on mu.login=mt5_positions_daily.login
-            where mt5_positions_daily.snapshot_at BETWEEN '"""+date_from_8+"""' and '"""+date_to+"""'
-            and mu.`Group` not LIKE '%TEST%'
-            GROUP BY mt5_positions_daily.login
+            select 
+            pos.Login as 'login',
+            ROUND(SUM(pos.Storage) + SUM(pos.Profit),2) as 'sum_profit_storage',
+            usg.State as 'State'
+            from mt.mt5positiondaily pos
+            join mt.mt5events ev on ev.HKey = pos.HKey and ev.LKey = pos.LKey
+            join mt.mt5user_actual_state usg on usg.Login = pos.Login
+            WHERE DATE(DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(ev.TimestampMs/1000 - 3600, 0) SECOND)) = DATE('2021-06-30 23:59:59')
+            GROUP BY pos.Login
     """
     cursor.execute(query)
     open_pos_sum = cursor.fetchall()
@@ -1800,7 +1827,9 @@ Report_ACM = """*Выгрузка отчетов для ACM*
 Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
 
 Выгружено из MT5 *"""+str(mt5)+""" / 13* отчетов (всего: *"""+str(mt4+mt5)+""" / 17*):
-*"""+Report_success+"""*"""
+*"""+Report_success+"""*
+
+#ACM"""
 
 telegram_bot(Report_ACM)
 #print(Report_ACM)

@@ -137,7 +137,9 @@ def Check_client(d_from = None, d_to = None, name = ""):
                 for key in manager:
                     Report_checked += """\n""" + key + """: """ + str(manager[key])
                     Checked+='<br>' + key + ': ' + str(manager[key])
-            Report_checked += """`"""
+            Report_checked += """`
+
+#CheckedCustomers"""
             
             telegram_bot(Report_checked)
             #print(Report_checked)

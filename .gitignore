@@ -147,6 +147,8 @@ bucket/
 # Reports
 Reports/
 *.xml
+*errors_*
+*info_*
 
 # Bat_files
 *.bat

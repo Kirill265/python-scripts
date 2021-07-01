@@ -10,19 +10,63 @@ import sys
 import os
 import shutil
 import gc
+import time
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
 from PyQt5.QtWidgets import *
 
+StyleSheet = '''
+#GreenProgressBar {
+    text-align: center;
+    border-radius: 5px;
+}
+#GreenProgressBar::chunk {
+    border-radius: 5px;
+    background-color: #00FF00;
+}
+'''
+class MyThread(QThread):
+    # Create a counter thread
+    change_value = pyqtSignal(int)
+    def __init__(self):
+        super(MyThread, self).__init__()
+
+    def __del__(self):
+        self.wait()
+        
+    def run(self):
+        for i in range(100):
+            time.sleep(0.1)
+            self.change_value.emit(i)
 class Form(QMainWindow):
     def getfile(self):
         return QFileDialog.getOpenFileName(self,"Выберите XBRL файл","")
-
+    
+    def direct(self):
+        return QFileDialog.getExistingDirectory(self,"Укажите путь для сохранения результатов","")
+    
     def inform(self,information):
-        return QMessageBox.information(self, 'Info',information, QMessageBox.No)
+        return QMessageBox.information(self, 'Info',information)
 
-
+class Progress(QWidget):
+    def __init__(self, *args, **kwargs):
+        super(Progress, self).__init__(*args, **kwargs)
+        self.resize(600, 75)
+        
+        self.pbar = QProgressBar(self, textVisible=True,objectName="GreenProgressBar")
+        self.pbar.setGeometry(30, 25, 540, 25)
+        
+    def startProgressBar(self):
+        self.thread = MyThread()
+        self.thread.change_value.connect(self.setProgressVal)
+        self.thread.start()
+    
+    def setProgressVal(self, val):
+        print(val)
+        self.pbar.setValue(int(val))
+        
 app = QApplication(sys.argv)
+app.setStyleSheet(StyleSheet)
 explorer = Form()
 
 getXBRL = explorer.getfile()[0]
@@ -68,30 +112,43 @@ for x in f_orig:
         open_tag += x
 close_tag = x
 f_orig.close()
-limit = 20000
+limit = 10000
 tail_flag = 0
 count_f = (count-1) // limit + 1
 if count % limit == 1:
     count_f -= 1
     tail_flag = 1
+'''
+pBar = Progress()
+pBar.setWindowTitle('Дробление файла')
+pBar.pbar.reset()
+pBar.pbar.setMinimum(0)
+pBar.pbar.setMaximum(count_f)
+#pBar.show()
+'''
 for i in range(count_f):
     temp_list.append(open(direction+'\\ftemp'+str(i)+'.xml','w',encoding='utf-8'))
     if i != 0:
         temp_list[i].write(open_tag)
 current = 0
 f_orig = open(getXBRL,'r',encoding='utf-8')
+prev_file_number = 0
 for x in f_orig:
     current += 1
     if current == count and tail_flag == 1:
         temp_list[(current-1) // limit - 1].write(x)
     else:
         temp_list[(current-1) // limit].write(x)
+    cur_file_number = (current-1) // limit + 1
+    if cur_file_number != prev_file_number:
+        print(str(cur_file_number)+'/'+str(count_f)+'\tфайлов создано')
+    prev_file_number = cur_file_number
 f_orig.close()
 for i in range(count_f):
     if i != count_f - 1:
         temp_list[i].write(close_tag)
     temp_list[i].close()
-
+#pBar.pbar.reset()
 #преобразование в словарь
 '''
 for i in range(count_f):
@@ -121,7 +178,6 @@ for i in range(count_f):
     gc.collect()
     del gc.garbage [:]
 '''
-
 for i in range(count_f):
     context = etree.iterparse(direction+'\\ftemp'+str(i)+'.xml')
     for event, elem in context:
@@ -138,37 +194,40 @@ for i in range(count_f):
                 all_typed = elem.findall('xbrli:scenario/xbrldi:typedMember/',namespaces=NSMAP)
                 for typed in all_typed:
                     XBRL_417[elem.attrib["id"]][typed.tag.split("}")[1]] = typed.text
-            elem.clear()
         if event == "end" and elem.tag.split("}")[0] == "{"+NSMAP["purcb_dic"]:
             if len(elem) == 0:
+                if i == 78:
+                    print(str(elem.attrib["contextRef"])+' '+str(elem.tag))
                 if elem.text != None:
                     XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = elem.text
                 else:
                     XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = ""
             elem.clear()
     del context
-    print(str(i+1)+'/'+str(count_f)+'\tdone')
+    #pBar.close()
+    #pBar.show()
+    #pBar.setProgressVal(i+1)
+    print(str(i+1)+'/'+str(count_f)+'\tфайлов добавлено в словарь')
         #del elem.getparent()[0]
         #elem.clear()
         #print(elem)
 #print(XBRL_417)
-    
-if os.path.isfile("info.txt"):
-    os.remove("info.txt")
-if os.path.isfile("error.txt"):
-    os.remove("error.txt")
 
-finfo = open('info.txt','w',encoding='utf-8')
-ferror = open('error.txt','w',encoding='utf-8')
-
+#pBar.close()
 #подсчет новых и отмененных сделок
+print('Проверка начата')
 count_deal = 0
 new_deal = 0
 cancel_deal = 0
 code_list = []
 error_list = ""
+all_error_list = ""
+count_error = 0
+count_error_context = 0
+count_error_deal = 0
 if OGRN != '1167746614947':
-    error_list += "Некорректный ОГРН в названии файла\n"
+    all_error_list += "Некорректный ОГРН в названии файла\n"
+    count_error += 1
 for key in XBRL_417:
     if XBRL_417[key].get("identifier") != OGRN:
         error_list += key + ":\t" + str(XBRL_417[key].get("identifier")) + "\tНекорректный показатель identifier\n"
@@ -261,6 +320,9 @@ for key in XBRL_417:
                 error_list += key + ":\tНекорректный уникальный код\n"
         except:
             error_list += key + ":\tНекорректный уникальный код\n"
+        
+        if error_list != "":
+            count_error_deal += 1
     elif XBRL_417[key].get("explicitMember", "wrong") != "wrong":
         if XBRL_417[key].get("explicitMember") != 'mem-int:OKUD0420417Member':
             error_list += key + ":\t" + str(XBRL_417[key].get("explicitMember")) + ":\tНекорректный показатель explicitMember\n"
@@ -297,30 +359,48 @@ for key in XBRL_417:
         '''
         if XBRL_417[key].get("Osnispobyazkontr") != 'Приказ № 8 от 18.09.2018г.':
             error_list += key + ":\t" + str(XBRL_417[key].get("Osnispobyazkontr")) + ":\tНекорректный показатель Osnispobyazkontr\n"
-    ferror.write(error_list)
+    if error_list != "":
+        count_error_context += 1
+    all_error_list += error_list
     error_list = ""
-finfo.write("Всего сделок:\t"+str(count_deal)+"\n")
-finfo.write("новых:\t\t"+str(new_deal)+"\n")
-finfo.write("отменных:\t"+str(cancel_deal))
-info = "\nВсего сделок:\t"+str(count_deal)
+print('Проверка закончена')
+count_error += all_error_list.count('\n')
+info = "Всего сделок:\t"+str(count_deal)
 info += "\nновых:\t\t"+str(new_deal)
 info += "\nотменных:\t"+str(cancel_deal)
+info += "\n\nВсего ошибок:\t"+str(count_error)
+info += "\nпо контекстам:\t"+str(count_error_context)
+info += "\nпо сделкам:\t\t"+str(count_error_deal)
 '''
 print("\nВсего сделок:\t"+str(count_deal))
 print("новых:\t\t"+str(new_deal))
 print("отменных:\t"+str(cancel_deal))
 '''
 if len(code_list) != len(set(code_list)):
-    finfo.write("\n\nНЕуникальные коды!!!")
     info += "\n\nНЕуникальные коды!!!"
     #print("\nНЕуникальные коды!!!")
 
 explorer.inform(info)
-
-finfo.close()
-ferror.close()
+result_dir = explorer.direct()+'/'
+if result_dir != '/':
+    if os.path.isfile(result_dir+"info_"+XBRL_file.split(".")[0]+".txt"):
+        os.remove(result_dir+"info_"+XBRL_file.split(".")[0]+".txt")
+    if os.path.isfile(result_dir+"errors_"+XBRL_file.split(".")[0]+".txt"):
+        os.remove(result_dir+"errors_"+XBRL_file.split(".")[0]+".txt")
+    with open(result_dir+'info_'+XBRL_file.split(".")[0]+'.txt','w',encoding='utf-8') as finfo:
+        finfo.write(info)
+    if all_error_list != "":
+        with open(result_dir+'errors_'+XBRL_file.split(".")[0]+'.txt','w',encoding='utf-8') as ferror:
+            ferror.write(all_error_list)
 shutil.rmtree(direction)
-
+'''
+for i in range(count_f):
+    os.remove(direction+'\\ftemp'+str(i)+'.xml')
+if not os.listdir(direction):
+    os.rmdir(direction)
+else:
+    print('папка temp содержит лишние файлы')
+'''
 #проверка отсутствия других показателей
 
 #проверка уникального кода

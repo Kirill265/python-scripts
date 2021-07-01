@@ -60,7 +60,9 @@ Report_fresh = """[Рассчет вознаграждения для Fresh](htt
 
 Счетов: *"""+return_info["acc_count"]+"""*
 Торговых операций: *"""+return_info["oper_count"]+"""*
-Конвертирующих счетов: *"""+return_info["conv_count"]+"""*"""
+Конвертирующих счетов: *"""+return_info["conv_count"]+"""*
+
+#agent_Fresh"""
 
 telegram_bot(Report_fresh)
 #print(Report_fresh)

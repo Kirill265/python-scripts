@@ -64,7 +64,9 @@ Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/ser
 Счетов: *"""+return_info["acc_count"]+"""*
 Торговых операций: *"""+return_info["oper_count"]+"""*
 Конвертирующих счетов: *"""+return_info["conv_count"]+"""*
-Вознаграждение за *"""+return_info["reward_count"]+"""* счетов."""
+Вознаграждение за *"""+return_info["reward_count"]+"""* счетов.
+
+#agentFinexpert"""
 
 telegram_bot(Report_finexpert)
 #print(Report_finexpert)

@@ -87,17 +87,23 @@ def PL_14(d_from = None, d_to = None, name = ""):
             PL = 'За '+msg_day+'.'+msg_month+'.'+str(report_date.year)+':'
             if sum_profit > 0:
                 Report_PL += """
-Клиенты заработали """+str(round(sum_profit,2))+"""`"""
+Клиенты заработали """+str(round(sum_profit,2))+"""`
+
+#PL14"""
                 PL += '<br>Клиенты заработали '+str(round(sum_profit,2))
             elif sum_profit < 0:
                 Report_PL += """
-Клиенты потеряли """+str(round(sum_profit,2))+"""`"""
+Клиенты потеряли """+str(round(sum_profit,2))+"""`
+
+#PL14"""
                 PL += '<br>Клиенты потеряли '+str(round(sum_profit,2))
             else:
-                Report_PL += str(round(sum_profit,2))+"""`"""
+                Report_PL += str(round(sum_profit,2))+"""`
+
+PL14"""
                 PL += '<br>'+str(round(sum_profit,2))
             telegram_bot(Report_PL)
-            #print(Report_PL)
+            print(Report_PL)
 
             URL_TW = "https://team.alfaforex.com/servicedesk/view/11550"
             message_text = PL

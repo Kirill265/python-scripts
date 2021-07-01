@@ -73,7 +73,9 @@ def New_client(d_from = None, d_to = None, name = ""):
 
 `C """+msg_from_day+"""."""+msg_from_month+""" по """+msg_to_day+"""."""+msg_to_month+""" - """+str(new_account["count"])+"""`"""
 
-            new_accounts = 'C '+msg_from_day+'.'+msg_from_month+' по '+msg_to_day+'.'+msg_to_month+' - '+str(new_account["count"])
+            new_accounts = 'C '+msg_from_day+'.'+msg_from_month+' по '+msg_to_day+'.'+msg_to_month+' - '+str(new_account["count"])+"""
+
+#NewClients"""
 
             telegram_bot(Report_newaccounts)
             #print(Report_newaccounts)

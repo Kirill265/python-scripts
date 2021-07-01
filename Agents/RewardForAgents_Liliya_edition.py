@@ -315,7 +315,9 @@ Report_reward = """[Расчет вознаграждения для агент�
 Отчетный месяц: *"""+month+""" """+str(report_date.year)+"""*.
 
 Рассчитано для *"""+str(done_counter)+""" / """+ str(len(utm_sources))+"""* агентов:
-*"""+Report_success+"""*"""+Report_unsuccess
+*"""+Report_success+"""*"""+Report_unsuccess+"""
+
+#agentAll"""
 
 telegram_bot(Report_reward)
 #print(Report_reward)
