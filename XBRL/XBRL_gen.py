@@ -11,222 +11,186 @@ import os
 import shutil
 import gc
 import time
+import csv
+import uuid
+import json
+import datetime
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
 from PyQt5.QtWidgets import *
 
-StyleSheet = '''
-#GreenProgressBar {
-    text-align: center;
-    border-radius: 5px;
-}
-#GreenProgressBar::chunk {
-    border-radius: 5px;
-    background-color: #00FF00;
-}
-'''
-class MyThread(QThread):
-    # Create a counter thread
-    change_value = pyqtSignal(int)
-    def __init__(self):
-        super(MyThread, self).__init__()
-
-    def __del__(self):
-        self.wait()
-        
-    def run(self):
-        for i in range(100):
-            time.sleep(0.1)
-            self.change_value.emit(i)
 class Form(QMainWindow):
-    def getfile(self):
-        return QFileDialog.getOpenFileName(self,"Выберите XBRL файл","","XBRL files (*.xml)")
-    
-    def direct(self):
-        return QFileDialog.getExistingDirectory(self,"Укажите путь для сохранения результатов","")
-    
-    def inform(self,information):
-        return QMessageBox.information(self, 'Результат проверки',information)
+    def getfile(self,message,ftype):
+        return QFileDialog.getOpenFileName(self,message,"",ftype)
 
-class Progress(QWidget):
-    def __init__(self, *args, **kwargs):
-        super(Progress, self).__init__(*args, **kwargs)
-        self.resize(600, 75)
-        
-        self.pbar = QProgressBar(self, textVisible=True,objectName="GreenProgressBar")
-        self.pbar.setGeometry(30, 25, 540, 25)
-        
-    def startProgressBar(self):
-        self.thread = MyThread()
-        self.thread.change_value.connect(self.setProgressVal)
-        self.thread.start()
+    def gettype(self):
+        items = ("месячный", "квартальный", "годовой")
+        item, ok = QInputDialog.getItem(self, "Параметры отчета", "тип отчета", items, 0, False)
+        if ok and item:
+            return(item)
     
-    def setProgressVal(self, val):
-        print(val)
-        self.pbar.setValue(int(val))
-        
+    def direct(self,message):
+        return QFileDialog.getExistingDirectory(self,message,"")
+    
+    def inform(self,message,information):
+        return QMessageBox.information(self, message, information)
+
+    def getdate(self,title,message):
+        return QInputDialog.getText(self, title, message, text = "ДД.ММ.ГГГГ")
+
+def taxonomy_func(csv_key : str, default : str, deal, taxonomy_dict):
+    if deal.get(csv_key) == None:
+        return default
+    else:
+        return taxonomy_dict.get(deal[csv_key],deal[csv_key])
+
 app = QApplication(sys.argv)
-app.setStyleSheet(StyleSheet)
 explorer = Form()
-getXBRL = explorer.getfile()[0]
-if getXBRL == '':
+getCSV = explorer.getfile('Выберите файл со сделками','CSV files (*.csv)')[0]
+if getCSV == '':
     sys.exit()
-XBRL_file = getXBRL.split("/")[-1]
-'''
-#XBRL_file = 'xbrl_1167746614947_test_20210430.xml'
-#XBRL_file = 'XBRL_1167746614947_test2_0420417_20210430.xml'
-#XBRL_file = 'XBRL_1167746614947_ep_nso_purcb_m_q_10d_reestr_0420417_20210331.xml'
-XBRL_file = 'XBRL_1167746614947_ep_nso_purcb_m_10d_reestr_0420417_20210531.xml'
-#XBRL_file = 'XBRL_1167746614947_ep_nso_purcb_m_10d_reestr_0420417_20200131.xml'
-'''
+CSV_file = getCSV.split("/")[-1]
+getInfSved = explorer.getfile('Выберите файл с информацией и сведением об организации','JSON files (*.json)')[0]
+if getInfSved == '':
+    getInfSved = os.path.dirname(os.path.abspath(__file__))+'\\inf_and_svedenia_417.json'
+getTaxonomy = explorer.getfile('Выберите файл таксономии','Text files (*.txt)')[0]
+if getTaxonomy == '':
+    getTaxonomy = os.path.dirname(os.path.abspath(__file__))+'\\dict_417.txt'
+type_dict = {"месячный":"m","квартальный":"m_q","годовой":"y"}
+getType = explorer.gettype()
+if getType == None:
+    repType = 'm'
+else:
+    repType = type_dict[getType]
+getRepDate = explorer.getdate("Укажите дату","отчетная дата")[0]
+if not re.fullmatch(r'\d{2}.\d{2}.\d{4}', str(getRepDate)):
+    report_date = str(datetime.datetime.now().date())
+else:
+    rep_d, rep_m, rep_y = str(getRepDate).split(".")
+    report_date = rep_y+'-'+rep_m+'-'+rep_d
+print(report_date)
+csv_list = []
+with open(getCSV) as repFile:  
+    reader = csv.DictReader(repFile,delimiter=';')
+    for row in reader:
+        csv_list.append(row)
+with open(getInfSved, encoding="utf-8") as fjson:
+    inf_sved = json.load(fjson)
+taxonomy_dict = {}
+with open(getTaxonomy, 'r') as taxonomy_txt:
+    for taxtag in taxonomy_txt:
+        taxonomy_dict[taxtag.split(':')[0]] = taxtag.split(':')[1].split('\n')[0]
 XBRL_417 = {}
-period_date = XBRL_file.split("_")[-1].replace(".xml","")
-last_date = period_date[0:4]+"-"+period_date[4:6]+"-"+period_date[6:8]
-OGRN = XBRL_file.split("_")[1]
-#last_date = "2021-04-30"
+count_str = 0
+unicode_dict = {}
+uid_list = []
+OGRN = inf_sved["information"]["OGRN"]
+for deal in csv_list:
+    uid = 'AF-'+str(uuid.uuid4())
+    uid_list.append(uid)
+    count_str += 1
+    XBRL_417[uid]={}
+    XBRL_417[uid]["identifier"] = OGRN
+    XBRL_417[uid]["period"] = report_date
+    XBRL_417[uid]["ID_strokiTypedname"] = deal.get("Идентификатор строки",str(count_str))
+    XBRL_417[uid]["ID_SdelkiTypedName"] = deal.get("Идентификатор сделки","")
+    if unicode_dict.get(deal.get("Дата заключения сделки")) == None:
+        unicode_dict[deal.get("Дата заключения сделки")] = 0
+    unicode_dict[deal.get("Дата заключения сделки")] += 1
+    try:
+        yyyy, mm, dd = str(deal.get("Дата заключения сделки")).split("-")
+    except:
+        yyyy, mm, dd = ['0000','00','00']
+    #XBRL_417[uid]["VnebirzhSdelka"] = deal.get("Уникальный номер информационного сообщения о сделке",dd+"."+mm+"."+yyyy+"-"+str(unicode_dict[deal.get("Дата заключения сделки")]).rjust(7,"0")+"-001-"+str(deal.get("Код направления сделки",""))[0]+"-001")
+    XBRL_417[uid]["VnebirzhSdelka"] = dd+"."+mm+"."+yyyy+"-"+str(unicode_dict[deal.get("Дата заключения сделки")]).rjust(7,"0")+"-001-"+str(deal.get("Код направления сделки",""))[0]+"-001"
+    XBRL_417[uid]["TipVnebirzhSdelkiEnumerator"] = 'mem-int:'+taxonomy_func('Тип внебиржевой сделки','OWN_sobstvennayaMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Data_zaklyucheniya_sdelki_Rekv_Vnebirzh_Sdelki"] = deal.get("Дата заключения сделки","")
+    XBRL_417[uid]["Vid_Dogovora_vnebirzhevoj_sdelkiEnumerator"] = 'mem-int:'+taxonomy_func('Вид договора','FORWARD_forvardnyjDogovorMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Vid_PFIEnumerator"] = 'mem-int:'+taxonomy_func('Виды производных финансовых инструментов','ValyutnyjForvardMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Kod_naprav_sdelkiEnumerator"] = 'mem-int:'+taxonomy_func('Код направления сделки','',deal,taxonomy_dict)
+    XBRL_417[uid]["Vid_Inf_SoobshhEnumerator"] = 'mem-int:'+taxonomy_func('Вид информационного сообщения о сделке','',deal,taxonomy_dict)
+    XBRL_417[uid]["PlatezhUsloviyaSdelkiEnumerator"] = 'mem-int:'+taxonomy_func('Платежные условия сделки','C_raschetnyjMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Inform_analiticheskaya_sistema_Rekv_Vnebirzh_Sdelki"] = deal.get("Информационная аналитическая система","MetaTrader 5")
+    XBRL_417[uid]["Naim_klienta_po_vnebirzhevoj_sdelke_Rek_kl_vneb_sd"] = deal.get("Наименование клиента","ФЛ")
+    XBRL_417[uid]["Tip_identif_klienta_VnebirzhSdelkaEnumerator"] = 'mem-int:'+taxonomy_func('Тип идентификатора клиента','IDfizicheskogoLiczaMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Identifikator_klienta_po_vneb_sdelke_Rek_kl_vneb_sd"] = deal.get("Идентификатор клиента","")
+    XBRL_417[uid]["Kod_strany_registr_klienta_po_vnebirzh_sdelkeEnumerator"] = 'mem-int:'+taxonomy_func('Код страны регистрации клиента','Strana_643RusRossiyaMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Naim_kontragenta_po_vnebirzh_sdelke_Rek_kontr_po_vneb_sd"] = deal.get("Наименование контрагента","ФЛ")
+    XBRL_417[uid]["Tip_identif_kontr_VnebirzhSdelkaEnumerator"] = 'mem-int:'+taxonomy_func('Тип идентификатора контрагента','IDfizicheskogoLiczaMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Identr_kontr_po_vneb_sdelke_Rek_kontr_po_vneb_sd"] = deal.get("Идентификатор контрагента","")
+    XBRL_417[uid]["Kod_strany_registr_kontrag_vnebirzh_sdelkeEnumerator"] = 'mem-int:'+taxonomy_func('Код страны регистрации контрагента','Strana_643RusRossiyaMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Naim_em_Rek_em_Inf_perv_chast_sdelki"] = deal.get("Наименование эмитента по 1-й части сделки","")
+    XBRL_417[uid]["ISIN_Rek_em"] = deal.get("Код финансового инструмента ISIN по 1-й части сделки","")
+    XBRL_417[uid]["Kolvo_fin_instr_Rek_em"] = deal.get("Количество финансовых инструментов по 1-й части сделки","")
+    XBRL_417[uid]["Tip_bazovogo_aktivaEnumerator"] = 'mem-int:'+taxonomy_func('Тип базового актива по 1-й части сделки','V1_valyutyMember',deal,taxonomy_dict)
+    XBRL_417[uid]["Bazovyj_aktiv"] = deal.get("Базовый актив по 1-й части сделки","")
+    XBRL_417[uid]["Tip_FI_vo_VnebSdelke_Kvalif_Nekvalif_Inv_1chsdEnumerator"] = 'mem-int:'+taxonomy_func('Тип финансового инструмента по 1-й части сделки1','NekvalificzirovannyjMember',deal,taxonomy_dict)
+    if deal.get("Код валюты цены по 1-й части сделки") == None:
+        Kod_valyuty = ''
+    else:
+        if not re.fullmatch(r'\d{3}-\w{3}',deal["Код валюты цены по 1-й части сделки"]):
+            Kod_valyuty = deal["Код валюты цены по 1-й части сделки"]
+            for key in taxonomy_dict:
+                if re.fullmatch(deal["Код валюты цены по 1-й части сделки"]+r'-\w{3}', str(key)):
+                    Kod_valyuty = taxonomy_dict[key]
+        else:
+            Kod_valyuty = taxonomy_dict.get(deal["Код валюты цены по 1-й части сделки"],deal["Код валюты цены по 1-й части сделки"])
+    XBRL_417[uid]["Kod_valyuty_vnebirzh_sdelk_Inf_1chast_sdelkEnumerator"] = 'mem-int:'+Kod_valyuty
+    XBRL_417[uid]["CZena_fin_instrumenta_Rek_em"] = deal.get("Цена финансового инструмента по 1-й части сделки","")
+    XBRL_417[uid]["Summa_sdelki_v_ediniczax_valyuty_czeny_sdelki_Rek_em"] = deal.get("Сумма по 1-й части сделки, в единицах валюты цены сделки","")
+    XBRL_417[uid]["Data_pereregistraczii_prav_na_finansovyj_instrument_Rek_em"] = deal.get("Планируемая (фактическая) дата перерегистрации","")
+    XBRL_417[uid]["Data_oplaty_fin_instrumenta_Rek_em"] = deal.get("Планируемая (фактическая) дата оплаты","")
+    XBRL_417[uid]["Naim_emitenta_Inf_o_vtor_chast_sdelki"] = deal.get("Наименование эмитента по 2-й части сделки","")
 
-NSMAP = {'mem_int': 'http://www.cbr.ru/xbrl/udr/dom/mem-int',
-         'xlink': 'http://www.w3.org/1999/xlink',
-         'dim_int': 'http://www.cbr.ru/xbrl/udr/dim/dim-int',
-         'iso4217': 'http://www.xbrl.org/2003/iso4217',
-         'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-         'link': 'http://www.xbrl.org/2003/linkbase',
-         'purcb_dic': 'http://www.cbr.ru/xbrl/nso/purcb/dic/purcb-dic',
-         'xbrldi': 'http://xbrl.org/2006/xbrldi',
-         'xsi_schemaLocation': 'http://xbrl.org/2006/xbrldi http://www.xbrl.org/2006/xbrldi-2006.xsd',
-         'xbrli': 'http://www.xbrl.org/2003/instance'}
+del csv_list
 
+uid = 'AF-'+str(uuid.uuid4())
+uid_list.append(uid)
+XBRL_417[uid]={}
+XBRL_417[uid]["identifier"] = OGRN
+XBRL_417[uid]["period"] = report_date
+XBRL_417[uid]["Kod_Okato3"] = inf_sved["information"]["OKATO"]
+XBRL_417[uid]["INN_Prof_uch"] = inf_sved["information"]["INN"]
+XBRL_417[uid]["OGRN_Prof_uch"] = inf_sved["information"]["OGRN"]
+XBRL_417[uid]["Poln_Naim_Prof_uch"] = inf_sved["information"]["poln_naim"]
+XBRL_417[uid]["SokrNaim_Prof_uch"] = inf_sved["information"]["kratk_naim"]
+XBRL_417[uid]["AdresPocht_Prof_uch"] = inf_sved["information"]["pochta"]
+XBRL_417[uid]["FIOEIO"] = inf_sved["information"]["FIO_eio"]
+XBRL_417[uid]["Dolzgnostlizapodpotchetnost"] = inf_sved["information"]["dolzhn_eio"]
+XBRL_417[uid]["Osnispobyaz"] = inf_sved["information"]["osnov_eio"]
+XBRL_417[uid]["FIOEIOkontr"] = inf_sved["information"]["FIO_kontr"]
+XBRL_417[uid]["Osnispobyazkontr"] = inf_sved["information"]["osnov_kontr"]
 
+uid = 'AF-'+str(uuid.uuid4())
+uid_list.append(uid)
+XBRL_417[uid]={}
+XBRL_417[uid]["identifier"] = OGRN
+XBRL_417[uid]["period"] = report_date
+XBRL_417[uid]["explicitMember"] = 'mem-int:'+inf_sved["svedenya"]["rep_417"]["taxonomy"]
+XBRL_417[uid]["LiczoOtvZaPrOblast"] = inf_sved["svedenya"]["rep_417"]["FIO_otv"]
+XBRL_417[uid]["DolzhLiczaOtvZaPrOblast"] = inf_sved["svedenya"]["rep_417"]["dolzhn_otv"]
+XBRL_417[uid]["KontInfLiczaOtvZaPrOblast"] = inf_sved["svedenya"]["rep_417"]["nomer_otv"]
+XBRL_417[uid]["Priznak_Nulevogo_OtchetaEnumerator"] = 'mem-int:'+taxonomy_dict.get(inf_sved["svedenya"]["rep_417"].get("priznak_null","Нет"),'NetMember')
+XBRL_417[uid]["NaimITrazrabotchika"] = inf_sved["svedenya"]["rep_417"]["it_razrab"]
+
+#Проверка файлов
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
 direction = os.path.join(direction, 'temp')
 if os.path.exists(direction):
     shutil.rmtree(direction)
 os.mkdir(direction)
-f_orig = open(getXBRL,'r',encoding='utf-8')
-count = 0
-temp_list = []
-for x in f_orig:
-    count +=1
-    if count == 1:
-        open_tag = x
-    if count != 1 and len(x) > 10 and x[:11] == '<xbrli:xbrl':
-        open_tag += x
-close_tag = x
-f_orig.close()
-limit = 50000
-tail_flag = 0
-count_f = (count-1) // limit + 1
-if count % limit == 1:
-    count_f -= 1
-    tail_flag = 1
-'''
-pBar = Progress()
-pBar.setWindowTitle('Дробление файла')
-pBar.pbar.reset()
-pBar.pbar.setMinimum(0)
-pBar.pbar.setMaximum(count_f)
-#pBar.show()
-'''
-for i in range(count_f):
-    temp_list.append(open(direction+'\\ftemp'+str(i)+'.xml','w',encoding='utf-8'))
-    if i != 0:
-        temp_list[i].write(open_tag)
-current = 0
-f_orig = open(getXBRL,'r',encoding='utf-8')
-prev_file_number = 0
-for x in f_orig:
-    current += 1
-    if current == count and tail_flag == 1:
-        temp_list[(current-1) // limit - 1].write(x)
-    else:
-        temp_list[(current-1) // limit].write(x)
-    cur_file_number = (current-1) // limit + 1
-    if cur_file_number != prev_file_number:
-        print(str(cur_file_number)+'/'+str(count_f)+'\tфайлов создано')
-    prev_file_number = cur_file_number
-f_orig.close()
-for i in range(count_f):
-    if i != count_f - 1:
-        temp_list[i].write(close_tag)
-    temp_list[i].close()
-#pBar.pbar.reset()
-#преобразование в словарь
-'''
-for i in range(count_f):
-    tree = etree.parse(direction+'\\ftemp'+str(i)+'.xml')
-    contexts = tree.findall('xbrli:context',namespaces=NSMAP)
-    for context in contexts:
-        XBRL_417[context.attrib["id"]]={}
-        XBRL_417[context.attrib["id"]]["identifier"] = context.find('xbrli:entity/xbrli:identifier[@scheme="http://www.cbr.ru"]',namespaces=NSMAP).text
-        XBRL_417[context.attrib["id"]]["period"] = context.find('xbrli:period/xbrli:instant',namespaces=NSMAP).text
-        if context.find('xbrli:scenario/xbrldi:explicitMember',namespaces=NSMAP) is not None:
-            XBRL_417[context.attrib["id"]]["explict"] = context.find('xbrli:scenario/xbrldi:explicitMember[@dimension="dim-int:OKUDAxis"]',namespaces=NSMAP).text
-        if context.find('xbrli:scenario/xbrldi:typedMember',namespaces=NSMAP) is not None:
-            #XBRL_417[context.attrib["id"]]["idstroki"] = context.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_strokiTaxis"]/dim_int:ID_strokiTypedname',namespaces=NSMAP).text
-            #XBRL_417[context.attrib["id"]]["idsdelki"] = context.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_vnebirg_sdelkiTaxis"]/dim_int:ID_SdelkiTypedName',namespaces=NSMAP).text
-            all_typed = context.findall('xbrli:scenario/xbrldi:typedMember/',namespaces=NSMAP)
-            for typed in all_typed:
-                XBRL_417[context.attrib["id"]][typed.tag.split("}")[1]] = typed.text
-    purcb_dic = tree.findall('.//purcb_dic:*',namespaces=NSMAP)
-    for purcb in purcb_dic:
-        if len(purcb) == 0:
-            if purcb.text != None:
-                XBRL_417[purcb.attrib["contextRef"]][purcb.tag.split("}")[1]] = purcb.text
-            else:
-                XBRL_417[purcb.attrib["contextRef"]][purcb.tag.split("}")[1]] = ""
-    del tree
-    del contexts
-    gc.collect()
-    del gc.garbage [:]
-'''
-for i in range(count_f):
-    context = etree.iterparse(direction+'\\ftemp'+str(i)+'.xml')
-    for event, elem in context:
-        if event == "end" and elem.tag == "{"+NSMAP["xbrli"]+"}context":
-        #if elem.tag == "{"+NSMAP["xbrli"]+"}context":
-            XBRL_417[elem.attrib["id"]]={}
-            XBRL_417[elem.attrib["id"]]["identifier"] = elem.find('xbrli:entity/xbrli:identifier[@scheme="http://www.cbr.ru"]',namespaces=NSMAP).text
-            XBRL_417[elem.attrib["id"]]["period"] = elem.find('xbrli:period/xbrli:instant',namespaces=NSMAP).text
-            if elem.find('xbrli:scenario/xbrldi:explicitMember',namespaces=NSMAP) is not None:
-                XBRL_417[elem.attrib["id"]]["explict"] = elem.find('xbrli:scenario/xbrldi:explicitMember[@dimension="dim-int:OKUDAxis"]',namespaces=NSMAP).text
-            if elem.find('xbrli:scenario/xbrldi:typedMember',namespaces=NSMAP) is not None:
-                #XBRL_417[elem.attrib["id"]]["idstroki"] = elem.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_strokiTaxis"]/dim_int:ID_strokiTypedname',namespaces=NSMAP).text
-                #XBRL_417[elem.attrib["id"]]["idsdelki"] = elem.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_vnebirg_sdelkiTaxis"]/dim_int:ID_SdelkiTypedName',namespaces=NSMAP).text
-                all_typed = elem.findall('xbrli:scenario/xbrldi:typedMember/',namespaces=NSMAP)
-                for typed in all_typed:
-                    XBRL_417[elem.attrib["id"]][typed.tag.split("}")[1]] = typed.text
-        if event == "end" and elem.tag.split("}")[0] == "{"+NSMAP["purcb_dic"]:
-            if len(elem) == 0:
-                if elem.text != None:
-                    XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = elem.text
-                else:
-                    XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = ""
-            elem.clear()
-    del context
-    #pBar.close()
-    #pBar.show()
-    #pBar.setProgressVal(i+1)
-    print(str(i+1)+'/'+str(count_f)+'\tфайлов добавлено в словарь')
-        #del elem.getparent()[0]
-        #elem.clear()
-        #print(elem)
-#print(XBRL_417)
-
-#pBar.close()
-#подсчет новых и отмененных сделок
 print('Проверка начата')
 count_deal = 0
 new_deal = 0
 cancel_deal = 0
 code_list = []
 error_list = ""
-#all_error_list = []
 count_error = 0
 count_error_context = 0
 count_error_deal = 0
-ferror_temp = open(direction+'\\temp_errors_'+XBRL_file.split(".")[0]+'.txt','w',encoding='utf-8')
+last_date = report_date
+ferror_temp = open(direction+'\\temp_errors_'+CSV_file.split(".")[0]+'.txt','w',encoding='utf-8')
 if OGRN != '1167746614947':
-    #all_error_list.append("Некорректный ОГРН в названии файла\n")
     ferror_temp.write("Некорректный ОГРН в названии файла\n")
     count_error += 1
 for key in XBRL_417:
@@ -243,7 +207,6 @@ for key in XBRL_417:
         code_list.append(XBRL_417[key].get("VnebirzhSdelka"))
         if not re.fullmatch(r'\d{2}\.\d{2}\.\d{4}-\d{7}-001-[BS]-001', str(XBRL_417[key].get("VnebirzhSdelka"))):
             error_list += key + ":\t" + str(XBRL_417[key].get("VnebirzhSdelka")) + ":\tНекорректный показатель VnebirzhSdelka\n"
-        
         if XBRL_417[key].get("TipVnebirzhSdelkiEnumerator") != 'mem-int:OWN_sobstvennayaMember':
             error_list += key + ":\t" + str(XBRL_417[key].get("TipVnebirzhSdelkiEnumerator")) + ":\tНекорректный показатель TipVnebirzhSdelkiEnumerator\n"
         try:
@@ -286,10 +249,8 @@ for key in XBRL_417:
             error_list += key + ":\t" + str(XBRL_417[key].get("Naim_em_Rek_em_Inf_perv_chast_sdelki")) + ":\tНекорректный показатель Naim_em_Rek_em_Inf_perv_chast_sdelki\n"
         if not re.fullmatch(r'[A-Z]{3}/[A-Z]{3}', str(XBRL_417[key].get("ISIN_Rek_em"))):
             error_list += key + ":\t" + str(XBRL_417[key].get("ISIN_Rek_em")) + ":\tНекорректный показатель ISIN_Rek_em\n"
-        
         if XBRL_417[key].get("Kolvo_fin_instr_Rek_em") == None:
             error_list += key + ":\t" + str(XBRL_417[key].get("Kolvo_fin_instr_Rek_em")) + ":\tНекорректный показатель Kolvo_fin_instr_Rek_em\n"
-        
         if XBRL_417[key].get("Tip_bazovogo_aktivaEnumerator") != 'mem-int:V1_valyutyMember':
             error_list += key + ":\t" + str(XBRL_417[key].get("Tip_bazovogo_aktivaEnumerator")) + ":\tНекорректный показатель Tip_bazovogo_aktivaEnumerator\n"
         if not re.fullmatch(r'\d{3}/\d{3}', str(XBRL_417[key].get("Bazovyj_aktiv"))):
@@ -298,7 +259,6 @@ for key in XBRL_417:
             error_list += key + ":\t" + str(XBRL_417[key].get("Tip_FI_vo_VnebSdelke_Kvalif_Nekvalif_Inv_1chsdEnumerator")) + ":\tНекорректный показатель Tip_FI_vo_VnebSdelke_Kvalif_Nekvalif_Inv_1chsdEnumerator\n"
         if not re.fullmatch(r'mem-int:Valyuta_\d{3}\w+Member', str(XBRL_417[key].get("Kod_valyuty_vnebirzh_sdelk_Inf_1chast_sdelkEnumerator"))):
             error_list += key + ":\t" + str(XBRL_417[key].get("Kod_valyuty_vnebirzh_sdelk_Inf_1chast_sdelkEnumerator")) + ":\tНекорректный показатель Kod_valyuty_vnebirzh_sdelk_Inf_1chast_sdelkEnumerator\n"
-        
         if XBRL_417[key].get("CZena_fin_instrumenta_Rek_em") == None:
             error_list += key + ":\t" + str(XBRL_417[key].get("CZena_fin_instrumenta_Rek_em")) + ":\tНекорректный показатель CZena_fin_instrumenta_Rek_em\n"
         if XBRL_417[key].get("Summa_sdelki_v_ediniczax_valyuty_czeny_sdelki_Rek_em") == None:
@@ -315,13 +275,11 @@ for key in XBRL_417:
             error_list += key + ":\t" + str(XBRL_417[key].get("Data_oplaty_fin_instrumenta_Rek_em")) + ":\tНекорректный показатель Data_oplaty_fin_instrumenta_Rek_em\n"
         if XBRL_417[key].get("Naim_emitenta_Inf_o_vtor_chast_sdelki") != "":
             error_list += key + ":\t" + str(XBRL_417[key].get("Naim_emitenta_Inf_o_vtor_chast_sdelki")) + ":\tНекорректный показатель Naim_emitenta_Inf_o_vtor_chast_sdelki\n"
-
         try:
             if str(XBRL_417[key].get("VnebirzhSdelka"))[0:2] != str(XBRL_417[key].get("Data_zaklyucheniya_sdelki_Rekv_Vnebirzh_Sdelki"))[8:10] or str(XBRL_417[key].get("VnebirzhSdelka"))[3:5] != str(XBRL_417[key].get("Data_zaklyucheniya_sdelki_Rekv_Vnebirzh_Sdelki"))[5:7] or str(XBRL_417[key].get("VnebirzhSdelka"))[6:10] != str(XBRL_417[key].get("Data_zaklyucheniya_sdelki_Rekv_Vnebirzh_Sdelki"))[0:4] or str(XBRL_417[key].get("VnebirzhSdelka"))[23] != str(XBRL_417[key].get("Kod_naprav_sdelkiEnumerator"))[8]:
                 error_list += key + ":\tНекорректный уникальный код\n"
         except:
             error_list += key + ":\tНекорректный уникальный код\n"
-        
         if error_list != "":
             count_error_deal += 1
     elif XBRL_417[key].get("explicitMember", "wrong") != "wrong":
@@ -362,74 +320,61 @@ for key in XBRL_417:
         count_error_context += 1
         ferror_temp.write(error_list)
         count_error += error_list.count("\n")
-        #all_error_list.append(error_list)
     error_list = ""
 print('Проверка закончена')
-#count_error = len(all_error_list)
 info = "Всего сделок:\t"+str(count_deal)
 info += "\nновых:\t\t"+str(new_deal)
 info += "\nотменных:\t"+str(cancel_deal)
 info += "\n\nВсего ошибок:\t"+str(count_error)
 info += "\nконтекстов:\t"+str(count_error_context)
 info += "\nсделок:\t\t"+str(count_error_deal)
-'''
-print("\nВсего сделок:\t"+str(count_deal))
-print("новых:\t\t"+str(new_deal))
-print("отменных:\t"+str(cancel_deal))
-'''
 if len(code_list) != len(set(code_list)):
     info += "\n\nНЕуникальные коды!!!"
-    #print("\nНЕуникальные коды!!!")
+if len(uid_list) != len(set(uid_list)):
+    info += "\n\nНЕуникальные UID!!!"
 ferror_temp.close()
-explorer.inform(info)
-result_dir = explorer.direct()+'/'
+explorer.inform('Результат проверки',info)
+result_dir = explorer.direct("Укажите путь для сохранения XBRL")+'/'
 if result_dir != '/':
-    if os.path.isfile(result_dir+"info_"+XBRL_file.split(".")[0]+".txt"):
-        os.remove(result_dir+"info_"+XBRL_file.split(".")[0]+".txt")
-    if os.path.isfile(result_dir+"errors_"+XBRL_file.split(".")[0]+".txt"):
-        os.remove(result_dir+"errors_"+XBRL_file.split(".")[0]+".txt")
-    with open(result_dir+'info_'+XBRL_file.split(".")[0]+'.txt','w',encoding='utf-8') as finfo:
+    if os.path.isfile(result_dir+"info_"+CSV_file.split(".")[0]+".txt"):
+        os.remove(result_dir+"info_"+CSV_file.split(".")[0]+".txt")
+    if os.path.isfile(result_dir+"errors_"+CSV_file.split(".")[0]+".txt"):
+        os.remove(result_dir+"errors_"+CSV_file.split(".")[0]+".txt")
+    with open(result_dir+'info_'+CSV_file.split(".")[0]+'.txt','w',encoding='utf-8') as finfo:
         finfo.write(info)
     if count_error != 0:
-        shutil.copyfile(direction+"\\temp_errors_"+XBRL_file.split(".")[0]+".txt", result_dir+"errors_"+XBRL_file.split(".")[0]+".txt")
-    '''
-    if all_error_list != "":
-        with open(result_dir+'errors_'+XBRL_file.split(".")[0]+'.txt','w',encoding='utf-8') as ferror:
-            ferror.write(all_error_list)
-    '''
+        shutil.copyfile(direction+"\\temp_errors_"+CSV_file.split(".")[0]+".txt", result_dir+"errors_"+CSV_file.split(".")[0]+".txt")
+    
+    with open(result_dir+'myXBRL_'+OGRN+'_ep_nso_purcb_'+repType+'_10d_reestr_0420417_'+report_date.replace("-","")+'.xml','w',encoding='utf-8') as myXBRL:
+        NSMAP = {'mem_int': 'http://www.cbr.ru/xbrl/udr/dom/mem-int',
+                 'xlink': 'http://www.w3.org/1999/xlink',
+                 'dim_int': 'http://www.cbr.ru/xbrl/udr/dim/dim-int',
+                 'iso4217': 'http://www.xbrl.org/2003/iso4217',
+                 'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                 'link': 'http://www.xbrl.org/2003/linkbase',
+                 'purcb_dic': 'http://www.cbr.ru/xbrl/nso/purcb/dic/purcb-dic',
+                 'xbrldi': 'http://xbrl.org/2006/xbrldi',
+                 'xsi_schemaLocation': 'http://xbrl.org/2006/xbrldi http://www.xbrl.org/2006/xbrldi-2006.xsd',
+                 'xbrli': 'http://www.xbrl.org/2003/instance'}
+        myXBRL.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+"\n")
+        myXBRL.write("<xbrli:xbrl xmlns:mem-int=\""+NSMAP["mem_int"]+"\" xmlns:xlink=\""+NSMAP["xlink"]+"\" xmlns:dim-int=\""+NSMAP["dim_int"]+"\" xmlns:iso4217=\""+NSMAP["iso4217"]+"\" xmlns:xsi=\""+NSMAP["xsi"]+"\" xmlns:link=\""+NSMAP["link"]+"\" xmlns:purcb-dic=\""+NSMAP["purcb_dic"]+"\" xmlns:xbrldi=\""+NSMAP["xbrldi"]+"\" xsi:schemaLocation=\""+NSMAP["xsi_schemaLocation"]+"\" xmlns:xbrli=\""+NSMAP["xbrli"]+"\">"+"\n")
+        for context_id in XBRL_417:
+            xml_str = '<xbrli:context id="{context_id}"> <xbrli:entity> <xbrli:identifier scheme="http://www.cbr.ru">{identifier}</xbrli:identifier> </xbrli:entity> <xbrli:period> <xbrli:instant>{period}</xbrli:instant> </xbrli:period>'.format(context_id=context_id, identifier=XBRL_417[context_id].get("identifier"), period=XBRL_417[context_id].get("period"))
+            if XBRL_417[context_id].get("VnebirzhSdelka", "wrong") != "wrong":
+                xml_str += ' <xbrli:scenario> <xbrldi:typedMember dimension="dim-int:ID_strokiTaxis"> <dim-int:ID_strokiTypedname>{ID_strokiTypedname}</dim-int:ID_strokiTypedname> </xbrldi:typedMember> <xbrldi:typedMember dimension="dim-int:ID_vnebirg_sdelkiTaxis"> <dim-int:ID_SdelkiTypedName>{ID_SdelkiTypedName}</dim-int:ID_SdelkiTypedName> </xbrldi:typedMember> </xbrli:scenario> </xbrli:context>'.format(ID_strokiTypedname=XBRL_417[context_id].get("ID_strokiTypedname"), ID_SdelkiTypedName=XBRL_417[context_id].get("ID_SdelkiTypedName"))
+            elif XBRL_417[context_id].get("explicitMember", "wrong") != "wrong":
+                xml_str += ' <xbrli:scenario> <xbrldi:explicitMember dimension="dim-int:OKUDAxis">{explicitMember}</xbrldi:explicitMember> </xbrli:scenario> </xbrli:context>'.format(explicitMember=XBRL_417[context_id].get("explicitMember"))
+            myXBRL.write(xml_str+"\n")
+        myXBRL.write("<xbrli:unit id=\"pure\"><xbrli:measure>xbrli:pure</xbrli:measure></xbrli:unit>"+"\n")
+        myXBRL.write("<xbrli:unit id=\"RUB\"><xbrli:measure>iso4217:RUB</xbrli:measure></xbrli:unit>"+"\n") 
+        for context_id in XBRL_417:
+            xml_str = ''
+            for name in XBRL_417[context_id]:
+                if name not in ['identifier', 'period', 'ID_strokiTypedname', 'ID_SdelkiTypedName', 'explicitMember', 'Kolvo_fin_instr_Rek_em', 'CZena_fin_instrumenta_Rek_em', 'Summa_sdelki_v_ediniczax_valyuty_czeny_sdelki_Rek_em']:
+                    xml_str += '<purcb-dic:{pokazatel} contextRef="{context_id}">{znachenie}</purcb-dic:{pokazatel}> '.format(context_id=context_id, pokazatel=name, znachenie=XBRL_417[context_id][name])
+                elif name in ['Kolvo_fin_instr_Rek_em', 'CZena_fin_instrumenta_Rek_em', 'Summa_sdelki_v_ediniczax_valyuty_czeny_sdelki_Rek_em']:
+                    xml_str += '<purcb-dic:{pokazatel} contextRef="{context_id}" decimals="2" unitRef="RUB">{znachenie}</purcb-dic:{pokazatel}> '.format(context_id=context_id, pokazatel=name, znachenie=XBRL_417[context_id][name])
+            myXBRL.write(xml_str+'\n') 
+        myXBRL.write("</xbrli:xbrl>")
+
 shutil.rmtree(direction)
-'''
-for i in range(count_f):
-    os.remove(direction+'\\ftemp'+str(i)+'.xml')
-if not os.listdir(direction):
-    os.rmdir(direction)
-else:
-    print('папка temp содержит лишние файлы')
-'''
-#проверка отсутствия других показателей
-
-#проверка уникального кода
-
-
-#print(root.tag)
-#for child in root[2]: print(child.tag)
-#print(root.attrib)
-#print(root[1].attrib)
-#print(root[3].findall('{http://www.xbrl.org/2003/instance}period'))
-
-#entries = tree.findall('{http://www.xbrl.org/2003/instance}context')
-#period_element = entries[0].find('{http://www.xbrl.org/2003/instance}period')
-#print(period_element)
-
-#all_period = tree.findall('.//{http://www.xbrl.org/2003/instance}period')
-#print(all_period)
-#all_idstrok = tree.findall('.//{http://www.cbr.ru/xbrl/udr/dim/dim-int}ID_strokiTypedname')
-#for idstrok in all_idstrok: print(idstrok.text)
-
-#ref = tree.findall('//{http://www.cbr.ru/xbrl/nso/purcb/dic/purcb-dic}*[@contextRef="DAB-2C4A364A-92C4-4536-81D5-7F26518A5AED"]')
-#for i in ref: print(i.tag+'\t'+str(i.text))
-
-#NS = '{http://www.xbrl.org/2003/instance}'
-#print(tree.findall('//{NS}context[{NS}scenario]'.format(NS=NS)))
-
-#print(etree.tounicode(tree, pretty_print=True))

@@ -19,10 +19,10 @@ from Business_menu_gen import actions_check, actions_report
 from keepass import key_pass
 from check_service import check_site, site_for_check
 
-from New_client_report import New_client
-from Checked_cust_report import Check_client
-from Convertation_report import Convert_period
-from Volume_USD_report import Volume_period
+from New_client_weekly import New_client
+from Checked_cust_weekly import Check_client
+from Convertation_weekly import Convert_period
+from Volume_USD_weekly import Volume_period
 
 path_staff = os.path.dirname(os.path.abspath(__file__))+'\\'+"bot_staff_id.json"
 path_guest = os.path.dirname(os.path.abspath(__file__))+'\\'+"bot_guest_id.json"

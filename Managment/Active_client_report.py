@@ -7,6 +7,8 @@ import pymysql
 from pymysql.cursors import DictCursor
 import time
 import os
+if __name__ == '__main__':
+    sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Tools")
 from TeamWox import TW_text_file
 from Telegram_report import telegram_bot
 from keepass import key_pass
@@ -44,3 +46,6 @@ def Active_client(d_from = None, d_to = None, name = ""):
         return Report_activeaccounts
     except:
         return 'Ошибка при формировании отчета.'
+
+if __name__ == '__main__':
+    Active_client()

@@ -5,12 +5,12 @@ from check_service import \
     check_sites, check_site, check_all, check_monitoring, \
     site_for_check
 
-from New_client_report import New_client
+from New_client_weekly import New_client
 from Active_client_report import Active_client
-from Checked_cust_report import Check_client
-from Convertation_report import Convert_period
-from USD_14_report import PL_14
-from Volume_USD_report import Volume_period
+from Checked_cust_weekly import Check_client
+from Convertation_weekly import Convert_period
+from USD_14 import PL_14
+from Volume_USD_weekly import Volume_period
 
 actions_check = OrderedDict([
     ('Проверить все', check_all),

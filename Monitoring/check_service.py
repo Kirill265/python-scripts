@@ -3,7 +3,6 @@ import os
 import shutil
 import requests
 import time
-from keepass import key_pass
 import httplib2
 from httplib2 import ServerNotFoundError, RedirectMissingLocation, RedirectLimit, RelativeURIError, FailedToDecompressContent, UnimplementedHmacDigestAuthOptionError, UnimplementedDigestAuthOptionError, HttpLib2Error
 import ssl
@@ -15,9 +14,12 @@ from datetime import timedelta, date, time
 import MetaTrader5 as mt5
 import json
 import re
-from Telegram_alert import telega_alert, edit_message, reply_message, pin_message, unpin_message
 import psutil
 import win32com.client
+if __name__ == '__main__':
+    sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Tools")
+from keepass import key_pass
+from Telegram_alert import telega_alert, edit_message, reply_message, pin_message, unpin_message
 
 site_for_check=["alfaforex.ru",
                 "alfaforex.ru/open-account",
@@ -447,3 +449,6 @@ def check_bot(name = ""):
         return Report
     except:
         return 'Ошибка в функции *check_bot*'
+
+if __name__ == '__main__':
+    check_all()
