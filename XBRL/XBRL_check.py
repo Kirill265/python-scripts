@@ -15,29 +15,6 @@ from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
 from PyQt5.QtWidgets import *
 
-StyleSheet = '''
-#GreenProgressBar {
-    text-align: center;
-    border-radius: 5px;
-}
-#GreenProgressBar::chunk {
-    border-radius: 5px;
-    background-color: #00FF00;
-}
-'''
-class MyThread(QThread):
-    # Create a counter thread
-    change_value = pyqtSignal(int)
-    def __init__(self):
-        super(MyThread, self).__init__()
-
-    def __del__(self):
-        self.wait()
-        
-    def run(self):
-        for i in range(100):
-            time.sleep(0.1)
-            self.change_value.emit(i)
 class Form(QMainWindow):
     def getfile(self):
         return QFileDialog.getOpenFileName(self,"Выберите XBRL файл","","XBRL files (*.xml)")
@@ -47,38 +24,13 @@ class Form(QMainWindow):
     
     def inform(self,information):
         return QMessageBox.information(self, 'Результат проверки',information)
-
-class Progress(QWidget):
-    def __init__(self, *args, **kwargs):
-        super(Progress, self).__init__(*args, **kwargs)
-        self.resize(600, 75)
-        
-        self.pbar = QProgressBar(self, textVisible=True,objectName="GreenProgressBar")
-        self.pbar.setGeometry(30, 25, 540, 25)
-        
-    def startProgressBar(self):
-        self.thread = MyThread()
-        self.thread.change_value.connect(self.setProgressVal)
-        self.thread.start()
-    
-    def setProgressVal(self, val):
-        print(val)
-        self.pbar.setValue(int(val))
-        
+       
 app = QApplication(sys.argv)
-app.setStyleSheet(StyleSheet)
 explorer = Form()
 getXBRL = explorer.getfile()[0]
 if getXBRL == '':
     sys.exit()
 XBRL_file = getXBRL.split("/")[-1]
-'''
-#XBRL_file = 'xbrl_1167746614947_test_20210430.xml'
-#XBRL_file = 'XBRL_1167746614947_test2_0420417_20210430.xml'
-#XBRL_file = 'XBRL_1167746614947_ep_nso_purcb_m_q_10d_reestr_0420417_20210331.xml'
-XBRL_file = 'XBRL_1167746614947_ep_nso_purcb_m_10d_reestr_0420417_20210531.xml'
-#XBRL_file = 'XBRL_1167746614947_ep_nso_purcb_m_10d_reestr_0420417_20200131.xml'
-'''
 XBRL_417 = {}
 period_date = XBRL_file.split("_")[-1].replace(".xml","")
 last_date = period_date[0:4]+"-"+period_date[4:6]+"-"+period_date[6:8]
@@ -96,9 +48,8 @@ NSMAP = {'mem_int': 'http://www.cbr.ru/xbrl/udr/dom/mem-int',
          'xsi_schemaLocation': 'http://xbrl.org/2006/xbrldi http://www.xbrl.org/2006/xbrldi-2006.xsd',
          'xbrli': 'http://www.xbrl.org/2003/instance'}
 
-
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
-direction = os.path.join(direction, 'temp')
+direction = os.path.join(direction, 'temp_XBRL_check')
 if os.path.exists(direction):
     shutil.rmtree(direction)
 os.mkdir(direction)
@@ -115,104 +66,90 @@ close_tag = x
 f_orig.close()
 limit = 50000
 tail_flag = 0
-count_f = (count-1) // limit + 1
-if count % limit == 1:
-    count_f -= 1
-    tail_flag = 1
-'''
-pBar = Progress()
-pBar.setWindowTitle('Дробление файла')
-pBar.pbar.reset()
-pBar.pbar.setMinimum(0)
-pBar.pbar.setMaximum(count_f)
-#pBar.show()
-'''
-for i in range(count_f):
-    temp_list.append(open(direction+'\\ftemp'+str(i)+'.xml','w',encoding='utf-8'))
-    if i != 0:
-        temp_list[i].write(open_tag)
-current = 0
-f_orig = open(getXBRL,'r',encoding='utf-8')
-prev_file_number = 0
-for x in f_orig:
-    current += 1
-    if current == count and tail_flag == 1:
-        temp_list[(current-1) // limit - 1].write(x)
-    else:
-        temp_list[(current-1) // limit].write(x)
-    cur_file_number = (current-1) // limit + 1
-    if cur_file_number != prev_file_number:
-        print(str(cur_file_number)+'/'+str(count_f)+'\tфайлов создано')
-    prev_file_number = cur_file_number
-f_orig.close()
-for i in range(count_f):
-    if i != count_f - 1:
-        temp_list[i].write(close_tag)
-    temp_list[i].close()
-#pBar.pbar.reset()
-#преобразование в словарь
-'''
-for i in range(count_f):
-    tree = etree.parse(direction+'\\ftemp'+str(i)+'.xml')
-    contexts = tree.findall('xbrli:context',namespaces=NSMAP)
-    for context in contexts:
-        XBRL_417[context.attrib["id"]]={}
-        XBRL_417[context.attrib["id"]]["identifier"] = context.find('xbrli:entity/xbrli:identifier[@scheme="http://www.cbr.ru"]',namespaces=NSMAP).text
-        XBRL_417[context.attrib["id"]]["period"] = context.find('xbrli:period/xbrli:instant',namespaces=NSMAP).text
-        if context.find('xbrli:scenario/xbrldi:explicitMember',namespaces=NSMAP) is not None:
-            XBRL_417[context.attrib["id"]]["explict"] = context.find('xbrli:scenario/xbrldi:explicitMember[@dimension="dim-int:OKUDAxis"]',namespaces=NSMAP).text
-        if context.find('xbrli:scenario/xbrldi:typedMember',namespaces=NSMAP) is not None:
-            #XBRL_417[context.attrib["id"]]["idstroki"] = context.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_strokiTaxis"]/dim_int:ID_strokiTypedname',namespaces=NSMAP).text
-            #XBRL_417[context.attrib["id"]]["idsdelki"] = context.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_vnebirg_sdelkiTaxis"]/dim_int:ID_SdelkiTypedName',namespaces=NSMAP).text
-            all_typed = context.findall('xbrli:scenario/xbrldi:typedMember/',namespaces=NSMAP)
-            for typed in all_typed:
-                XBRL_417[context.attrib["id"]][typed.tag.split("}")[1]] = typed.text
-    purcb_dic = tree.findall('.//purcb_dic:*',namespaces=NSMAP)
-    for purcb in purcb_dic:
-        if len(purcb) == 0:
-            if purcb.text != None:
-                XBRL_417[purcb.attrib["contextRef"]][purcb.tag.split("}")[1]] = purcb.text
-            else:
-                XBRL_417[purcb.attrib["contextRef"]][purcb.tag.split("}")[1]] = ""
-    del tree
-    del contexts
-    gc.collect()
-    del gc.garbage [:]
-'''
-for i in range(count_f):
-    context = etree.iterparse(direction+'\\ftemp'+str(i)+'.xml')
-    for event, elem in context:
-        if event == "end" and elem.tag == "{"+NSMAP["xbrli"]+"}context":
-        #if elem.tag == "{"+NSMAP["xbrli"]+"}context":
-            XBRL_417[elem.attrib["id"]]={}
-            XBRL_417[elem.attrib["id"]]["identifier"] = elem.find('xbrli:entity/xbrli:identifier[@scheme="http://www.cbr.ru"]',namespaces=NSMAP).text
-            XBRL_417[elem.attrib["id"]]["period"] = elem.find('xbrli:period/xbrli:instant',namespaces=NSMAP).text
-            if elem.find('xbrli:scenario/xbrldi:explicitMember',namespaces=NSMAP) is not None:
-                XBRL_417[elem.attrib["id"]]["explict"] = elem.find('xbrli:scenario/xbrldi:explicitMember[@dimension="dim-int:OKUDAxis"]',namespaces=NSMAP).text
-            if elem.find('xbrli:scenario/xbrldi:typedMember',namespaces=NSMAP) is not None:
-                #XBRL_417[elem.attrib["id"]]["idstroki"] = elem.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_strokiTaxis"]/dim_int:ID_strokiTypedname',namespaces=NSMAP).text
-                #XBRL_417[elem.attrib["id"]]["idsdelki"] = elem.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_vnebirg_sdelkiTaxis"]/dim_int:ID_SdelkiTypedName',namespaces=NSMAP).text
-                all_typed = elem.findall('xbrli:scenario/xbrldi:typedMember/',namespaces=NSMAP)
-                for typed in all_typed:
-                    XBRL_417[elem.attrib["id"]][typed.tag.split("}")[1]] = typed.text
-        if event == "end" and elem.tag.split("}")[0] == "{"+NSMAP["purcb_dic"]:
-            if len(elem) == 0:
-                if elem.text != None:
-                    XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = elem.text
-                else:
-                    XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = ""
-            elem.clear()
-    del context
-    #pBar.close()
-    #pBar.show()
-    #pBar.setProgressVal(i+1)
-    print(str(i+1)+'/'+str(count_f)+'\tфайлов добавлено в словарь')
-        #del elem.getparent()[0]
-        #elem.clear()
-        #print(elem)
-#print(XBRL_417)
+if count < 380000:
+    count_f = (count-1) // limit + 1
+    if count % limit == 1:
+        count_f -= 1
+        tail_flag = 1
+    for i in range(count_f):
+        temp_list.append(open(direction+'\\ftemp'+str(i)+'.xml','w',encoding='utf-8'))
+        if i != 0:
+            temp_list[i].write(open_tag)
+    current = 0
+    f_orig = open(getXBRL,'r',encoding='utf-8')
+    prev_file_number = 0
+    for x in f_orig:
+        current += 1
+        if current == count and tail_flag == 1:
+            temp_list[(current-1) // limit - 1].write(x)
+        else:
+            temp_list[(current-1) // limit].write(x)
+        cur_file_number = (current-1) // limit + 1
+        if cur_file_number != prev_file_number:
+            print(str(cur_file_number)+'/'+str(count_f)+'\tфайлов создано')
+        prev_file_number = cur_file_number
+    f_orig.close()
+    for i in range(count_f):
+        if i != count_f - 1:
+            temp_list[i].write(close_tag)
+        temp_list[i].close()
+    #преобразование в словарь
+    for i in range(count_f):
+        context = etree.iterparse(direction+'\\ftemp'+str(i)+'.xml')
+        for event, elem in context:
+            if event == "end" and elem.tag == "{"+NSMAP["xbrli"]+"}context":
+            #if elem.tag == "{"+NSMAP["xbrli"]+"}context":
+                XBRL_417[elem.attrib["id"]]={}
+                XBRL_417[elem.attrib["id"]]["identifier"] = elem.find('xbrli:entity/xbrli:identifier[@scheme="http://www.cbr.ru"]',namespaces=NSMAP).text
+                XBRL_417[elem.attrib["id"]]["period"] = elem.find('xbrli:period/xbrli:instant',namespaces=NSMAP).text
+                if elem.find('xbrli:scenario/xbrldi:explicitMember',namespaces=NSMAP) is not None:
+                    XBRL_417[elem.attrib["id"]]["explicitMember"] = elem.find('xbrli:scenario/xbrldi:explicitMember[@dimension="dim-int:OKUDAxis"]',namespaces=NSMAP).text
+                if elem.find('xbrli:scenario/xbrldi:typedMember',namespaces=NSMAP) is not None:
+                    #XBRL_417[elem.attrib["id"]]["ID_strokiTypedname"] = elem.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_strokiTaxis"]/dim_int:ID_strokiTypedname',namespaces=NSMAP).text
+                    #XBRL_417[elem.attrib["id"]]["ID_strokiTypedname"] = elem.find('xbrli:scenario/xbrldi:typedMember[@dimension="dim-int:ID_vnebirg_sdelkiTaxis"]/dim_int:ID_SdelkiTypedName',namespaces=NSMAP).text
+                    all_typed = elem.findall('xbrli:scenario/xbrldi:typedMember/',namespaces=NSMAP)
+                    for typed in all_typed:
+                        XBRL_417[elem.attrib["id"]][typed.tag.split("}")[1]] = typed.text
+            if event == "end" and elem.tag.split("}")[0] == "{"+NSMAP["purcb_dic"]:
+                if len(elem) == 0:
+                    if elem.text != None:
+                        XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = elem.text
+                    else:
+                        XBRL_417[elem.attrib["contextRef"]][elem.tag.split("}")[1]] = ""
+                elem.clear()
+        del context
+        print(str(i+1)+'/'+str(count_f)+'\tфайлов добавлено в словарь')
+            #del elem.getparent()[0]
+            #elem.clear()
+            #print(elem)
+    #print(XBRL_417)
+else:
+    with open(getXBRL,'r',encoding='utf-8') as f_orig:
+        for line in f_orig:
+            if '<xbrli:context' in line:
+                if 'id="' in line:
+                    context_id = line.split("id=\"")[1].split("\"")[0]
+                    XBRL_417[context_id]={}
+                if 'xbrli:identifier' in line:
+                    XBRL_417[context_id]["identifier"] = line.split("</xbrli:identifier>")[0].split(">")[-1]
+                if 'xbrli:period' in line:
+                    XBRL_417[context_id]["period"] = line.split("</xbrli:instant>")[0].split(">")[-1]
+                if 'dim-int:ID_strokiTypedname' in line:
+                    XBRL_417[context_id]["ID_strokiTypedname"] = line.split("</dim-int:ID_strokiTypedname>")[0].split(">")[-1]
+                if 'dim-int:ID_SdelkiTypedName' in line:
+                    XBRL_417[context_id]["ID_SdelkiTypedName"] = line.split("</dim-int:ID_SdelkiTypedName>")[0].split(">")[-1]
+                if 'xbrldi:explicitMember' in line:
+                    XBRL_417[context_id]["explicitMember"] = line.split("</xbrldi:explicitMember>")[0].split(">")[-1]
+            if '<purcb-dic:' in line:
+                pokazateli = line.split("<")
+                for i in range(len(pokazateli)):
+                    if i % 2 == 1:
+                        tag, znach = pokazateli[i].split(">")
+                        name = tag.split("purcb-dic:")[-1].split(" ")[0]
+                        if 'contextRef="' in line:
+                            context_ref = tag.split("contextRef=\"")[-1].split("\"")[0]
+                        XBRL_417[context_ref][name] = znach
 
-#pBar.close()
 #подсчет новых и отмененных сделок
 print('Проверка начата')
 count_deal = 0

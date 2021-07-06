@@ -175,7 +175,7 @@ XBRL_417[uid]["NaimITrazrabotchika"] = inf_sved["svedenya"]["rep_417"]["it_razra
 
 #Проверка файлов
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
-direction = os.path.join(direction, 'temp')
+direction = os.path.join(direction, 'temp_XBRL_gen')
 if os.path.exists(direction):
     shutil.rmtree(direction)
 os.mkdir(direction)
