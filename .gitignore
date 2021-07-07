@@ -149,6 +149,7 @@ Reports/
 *.xml
 *errors_*
 *info_*
+*XBRL417*
 
 # Bat_files
 *.bat

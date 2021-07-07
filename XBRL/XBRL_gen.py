@@ -15,13 +15,14 @@ import csv
 import uuid
 import json
 import datetime
+from datetime import timedelta, date, time
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
 from PyQt5.QtWidgets import *
 
 class Form(QMainWindow):
     def getfile(self,message,ftype):
-        return QFileDialog.getOpenFileName(self,message,"",ftype)
+        return QFileDialog.getOpenFileName(self,message,"./",ftype)
 
     def gettype(self):
         items = ("месячный", "квартальный", "годовой")
@@ -30,7 +31,7 @@ class Form(QMainWindow):
             return(item)
     
     def direct(self,message):
-        return QFileDialog.getExistingDirectory(self,message,"")
+        return QFileDialog.getExistingDirectory(self,message,"./")
     
     def inform(self,message,information):
         return QMessageBox.information(self, message, information)
@@ -86,7 +87,7 @@ unicode_dict = {}
 uid_list = []
 OGRN = inf_sved["information"]["OGRN"]
 for deal in csv_list:
-    uid = 'AF-'+str(uuid.uuid4())
+    uid = 'DAB-'+str(uuid.uuid4())
     uid_list.append(uid)
     count_str += 1
     XBRL_417[uid]={}
@@ -101,8 +102,8 @@ for deal in csv_list:
         yyyy, mm, dd = str(deal.get("Дата заключения сделки")).split("-")
     except:
         yyyy, mm, dd = ['0000','00','00']
-    #XBRL_417[uid]["VnebirzhSdelka"] = deal.get("Уникальный номер информационного сообщения о сделке",dd+"."+mm+"."+yyyy+"-"+str(unicode_dict[deal.get("Дата заключения сделки")]).rjust(7,"0")+"-001-"+str(deal.get("Код направления сделки",""))[0]+"-001")
-    XBRL_417[uid]["VnebirzhSdelka"] = dd+"."+mm+"."+yyyy+"-"+str(unicode_dict[deal.get("Дата заключения сделки")]).rjust(7,"0")+"-001-"+str(deal.get("Код направления сделки",""))[0]+"-001"
+    XBRL_417[uid]["VnebirzhSdelka"] = deal.get("Уникальный номер информационного сообщения о сделке",dd+"."+mm+"."+yyyy+"-"+str(unicode_dict[deal.get("Дата заключения сделки")]).rjust(7,"0")+"-001-"+str(deal.get("Код направления сделки",""))[0]+"-001")
+    #XBRL_417[uid]["VnebirzhSdelka"] = dd+"."+mm+"."+yyyy+"-"+str(unicode_dict[deal.get("Дата заключения сделки")]).rjust(7,"0")+"-001-"+str(deal.get("Код направления сделки",""))[0]+"-001"
     XBRL_417[uid]["TipVnebirzhSdelkiEnumerator"] = 'mem-int:'+taxonomy_func('Тип внебиржевой сделки','OWN_sobstvennayaMember',deal,taxonomy_dict)
     XBRL_417[uid]["Data_zaklyucheniya_sdelki_Rekv_Vnebirzh_Sdelki"] = deal.get("Дата заключения сделки","")
     XBRL_417[uid]["Vid_Dogovora_vnebirzhevoj_sdelkiEnumerator"] = 'mem-int:'+taxonomy_func('Вид договора','FORWARD_forvardnyjDogovorMember',deal,taxonomy_dict)
@@ -336,6 +337,10 @@ ferror_temp.close()
 explorer.inform('Результат проверки',info)
 result_dir = explorer.direct("Укажите путь для сохранения XBRL")+'/'
 if result_dir != '/':
+    result_dir = os.path.join(result_dir, 'result_XBRL_gen')
+    if not os.path.exists(result_dir):
+        os.mkdir(result_dir)
+    result_dir += '/'
     if os.path.isfile(result_dir+"info_"+CSV_file.split(".")[0]+".txt"):
         os.remove(result_dir+"info_"+CSV_file.split(".")[0]+".txt")
     if os.path.isfile(result_dir+"errors_"+CSV_file.split(".")[0]+".txt"):
@@ -345,7 +350,7 @@ if result_dir != '/':
     if count_error != 0:
         shutil.copyfile(direction+"\\temp_errors_"+CSV_file.split(".")[0]+".txt", result_dir+"errors_"+CSV_file.split(".")[0]+".txt")
     
-    with open(result_dir+'myXBRL_'+OGRN+'_ep_nso_purcb_'+repType+'_10d_reestr_0420417_'+report_date.replace("-","")+'.xml','w',encoding='utf-8') as myXBRL:
+    with open(result_dir+'XBRL_'+OGRN+'_ep_nso_purcb_'+repType+'_10d_reestr_0420417_'+report_date.replace("-","")+'.xml','w',encoding='utf-8') as myXBRL:
         NSMAP = {'mem_int': 'http://www.cbr.ru/xbrl/udr/dom/mem-int',
                  'xlink': 'http://www.w3.org/1999/xlink',
                  'dim_int': 'http://www.cbr.ru/xbrl/udr/dim/dim-int',
