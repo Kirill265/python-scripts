@@ -149,7 +149,6 @@ Reports/
 *.xml
 *errors_*
 *info_*
-*XBRL417*
 
 # Bat_files
 *.bat
@@ -157,3 +156,9 @@ Reports/
 #Test_files
 *test*.py
 Test/
+
+#Temp files
+*temp*
+
+#Zip files
+*.zip

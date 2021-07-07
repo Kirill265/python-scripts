@@ -1,0 +1,3 @@
+pyinstaller --onedir --onefile --windowed --name=XBRL_417_gen "C:\Users\Kirill_Cherkasov\Documents\Python_scripts\XBRL\XBRL_gen.py"
+
+pyinstaller --onedir --onefile --windowed --name=XBRL_417_check "C:\Users\Kirill_Cherkasov\Documents\Python_scripts\XBRL\XBRL_check.py"
