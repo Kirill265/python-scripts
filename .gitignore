@@ -160,5 +160,6 @@ Test/
 #Temp files
 *temp*
 
-#Zip files
+#Programms
 *.zip
+*XBRL417/
