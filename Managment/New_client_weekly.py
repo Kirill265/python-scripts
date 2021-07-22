@@ -74,11 +74,11 @@ def New_client(d_from = None, d_to = None, name = ""):
 
             Report_newaccounts = """[Кол-во новых активных клиентов](https://team.alfaforex.com/servicedesk/view/10999)
 
-`C """+msg_from_day+"""."""+msg_from_month+""" по """+msg_to_day+"""."""+msg_to_month+""" - """+str(new_account["count"])+"""`"""
-
-            new_accounts = 'C '+msg_from_day+'.'+msg_from_month+' по '+msg_to_day+'.'+msg_to_month+' - '+str(new_account["count"])+"""
+`C """+msg_from_day+"""."""+msg_from_month+""" по """+msg_to_day+"""."""+msg_to_month+""" - """+str(new_account["count"])+"""`
 
 #NewClients"""
+
+            new_accounts = 'C '+msg_from_day+'.'+msg_from_month+' по '+msg_to_day+'.'+msg_to_month+' - '+str(new_account["count"])
 
             telegram_bot(Report_newaccounts)
             #print(Report_newaccounts)

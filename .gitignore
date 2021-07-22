@@ -162,4 +162,4 @@ Test/
 
 #Programms
 *.zip
-*XBRL417/
+*.py
