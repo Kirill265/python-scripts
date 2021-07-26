@@ -1,0 +1,37 @@
+{
+	"Total": 120,
+	"TotalValute": {
+		"EUR": 100,
+		"USD": 100,
+		"GBP": 100,
+		"RUB": 100,
+		"JPY": 100,
+		"CAD": 100,
+		"AUD": 100,
+		"CHF": 50,
+		"NZD": 50,
+		"NOK": 50,
+		"SEK": 50,
+		"ZAR": 40,
+		"MXN": 40,
+		"DKK": 15,
+		"SGD": 15
+	},
+	"ClientValute": {
+		"EUR": 80,
+		"USD": 80,
+		"GBP": 80,
+		"RUB": 80,
+		"JPY": 80,
+		"CAD": 80,
+		"AUD": 80,
+		"CHF": 50,
+		"NZD": 50,
+		"NOK": 50,
+		"SEK": 50,
+		"ZAR": 40,
+		"MXN": 40,
+		"DKK": 8,
+		"SGD": 8
+	}
+}

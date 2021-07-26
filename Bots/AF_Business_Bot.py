@@ -15,7 +15,7 @@ from telebot.types import ReplyKeyboardRemove, CallbackQuery
 sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Tools")
 sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Monitoring")
 sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Managment")
-from Business_menu_gen import actions_check, actions_report
+from Business_menu_gen import actions_check, actions_report, actions_net
 from keepass import key_pass
 from check_service import check_site, site_for_check
 
@@ -76,7 +76,7 @@ def send_welcome(message):
     #For SUPERUSER
     if message.chat.id in superuser_list:
         keyboard = types.ReplyKeyboardMarkup(True,False)
-        keyboard.add('Выгрузить отчет','Проверить сервис')
+        keyboard.add('Выгрузить отчет','Проверить сервис','Проверить лимиты')
         send = bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}!\nВыбери действие.',reply_markup=keyboard)
     #For CHECKONLY
     elif message.chat.id in checkonly_list:
@@ -162,7 +162,7 @@ def get_text_messages(message):
     if message.chat.id in superuser_list:
         if "меню" in message.text.lower():
             keyboard = types.ReplyKeyboardMarkup(True,False)
-            keyboard.add('Выгрузить отчет','Проверить сервис')
+            keyboard.add('Выгрузить отчет','Проверить сервис','Проверить лимиты')
             send = bot.send_message(message.chat.id, f'Выбери действие',reply_markup=keyboard)
         elif message.text.lower() == "привет":
             bot.send_message(message.chat.id,'Привет!')
@@ -215,6 +215,14 @@ def get_text_messages(message):
             calendar_to_del[message.chat.id].append(sended.message_id)
             keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
             keyboard.add('За прошлую неделю',*[types.KeyboardButton(_) for _ in actions_report],'Назад в меню')
+        elif ("лимит" in message.text.lower()) or (message.text in actions_net):
+            answer = actions_net[message.text]('name') if message.text in actions_net else 'Выбери значение из списка'
+            keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            keyboard.add(*[types.KeyboardButton(_) for _ in actions_net],'Назад в меню')
+            if answer == "Выбери значение из списка":
+                bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode= 'Markdown',disable_web_page_preview = True)
+            else:
+                bot.send_message(message.chat.id, answer, parse_mode= 'Markdown',disable_web_page_preview = True)
         elif ("сервис" in message.text.lower()) or (message.text in actions_check):
             answer = actions_check[message.text]('name') if message.text in actions_check else 'Выбери значение из списка'
             keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)

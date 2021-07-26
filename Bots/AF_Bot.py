@@ -7,7 +7,7 @@ import telebot
 from telebot import types
 sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Tools")
 sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Monitoring")
-from Bot_menu_gen import actions, actions_check
+from Bot_menu_gen import actions, actions_check, actions_net
 from keepass import key_pass
 from sms_parcing import parsing_trunk, parsing_rc
 from check_service import check_site, site_for_check
@@ -16,7 +16,7 @@ bot = telebot.TeleBot(key_pass('AF Report Bot').password)
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     keyboard = types.ReplyKeyboardMarkup(True,False)
-    keyboard.add('Получить код из SMS (тест)','Генератор тест-данных','Проверка сервисов (бой)')
+    keyboard.add('Получить код из SMS (тест)','Генератор тест-данных','Проверка сервисов (бой)','Проверка лимитов (бой)')
     send = bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}!\nВыбери действие.',reply_markup=keyboard)
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
@@ -28,7 +28,7 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, text='Выбери действие', reply_markup=keyboard)
         '''
         keyboard = types.ReplyKeyboardMarkup(True,False)
-        keyboard.add('Получить код из SMS (тест)','Генератор тест-данных','Проверка сервисов (бой)')
+        keyboard.add('Получить код из SMS (тест)','Генератор тест-данных','Проверка сервисов (бой)','Проверка лимитов (бой)')
         send = bot.send_message(message.chat.id, f'Выбери действие',reply_markup=keyboard)
     elif message.text.lower() == "привет":
         bot.send_message(message.chat.id,'Привет!')
@@ -42,6 +42,14 @@ def get_text_messages(message):
             bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode= 'Markdown')
         else:
             bot.send_message(message.chat.id, '`'+answer+'`', parse_mode= 'Markdown')
+    elif ("лимит" in message.text.lower()) or (message.text in actions_net):
+        answer = actions_net[message.text]('name') if message.text in actions_net else 'Выбери значение из списка'
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        keyboard.add(*[types.KeyboardButton(_) for _ in actions_net],'Назад в меню')
+        if answer == "Выбери значение из списка":
+            bot.send_message(message.chat.id, answer, reply_markup=keyboard, parse_mode= 'Markdown',disable_web_page_preview = True)
+        else:
+            bot.send_message(message.chat.id, answer, parse_mode= 'Markdown',disable_web_page_preview = True)
     elif ("сервис" in message.text.lower()) or (message.text in actions_check) or ("Один ресурс" in message.text.lower()):
         answer = actions_check[message.text]('name') if message.text in actions_check else 'Выбери значение из списка'
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)

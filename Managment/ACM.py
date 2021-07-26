@@ -20,7 +20,7 @@ connection = pymysql.connect(
     port=int(key_pass(SQL_DB).url[-4:]),
     user=key_pass(SQL_DB).username,
     password=key_pass(SQL_DB).password,
-    db='report_new',
+    db='report_new', 
     charset='utf8mb4',
     cursorclass=DictCursor
 )
@@ -172,7 +172,13 @@ with connection.cursor() as cursor:
             when mu.`GROUP` like '%JPY%' then 'JPY'
             else 'USD'
             END as currency_id
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZipCode' 
              -- поле нужно, чтобы вычленять клиентов-юр лиц (для них нужно выводить номер договора вида ХХХХХ-МТА, для физиков - только номер ЛК)
             FROM report_new.mt5_deals
             left join report_new.mt5_users_view  mu on mu.login=report_new.mt5_deals.Login
@@ -236,7 +242,13 @@ with connection.cursor() as cursor:
             when mu.`GROUP` like '%JPY%' then 'JPY'
             else 'USD'
             END as currency_id
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZIPCODE' 
             -- поле нужно, чтобы вычленять клиентов-юр лиц (для них нужно выводить номер договора вида ХХХХХ-МТА, для физиков - только номер ЛК)
             FROM mt4_trades
             left join mt4_users_view mu on mu.login=mt4_trades.login
@@ -287,7 +299,13 @@ with connection.cursor() as cursor:
             ,mt5_deals.login as login
             ,mt5_deals.profit as amount
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZipCode' 
             ,
             CASE
             when mu.`GROUP` like '%RUR%' then 'RUR'
@@ -360,7 +378,13 @@ with connection.cursor() as cursor:
             ,if( mu.`GROUP` like '%JPY%','JPY'
             ,'USD'))))) as currency
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZipCode' 
             FROM mt5_deals
             left join mt5_users_view mu on mt5_deals.login = mu.login
             left join mt5_symbols on mt5_symbols.symbol = mt5_deals.symbol
@@ -443,7 +467,13 @@ with connection.cursor() as cursor:
             ,if( mu.`GROUP` like '%JPY%','JPY'
             ,'USD'))))) as currency
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZIPCODE' 
             FROM mt4_trades
             left join mt4_users_view mu on mt4_trades.login = mu.login
             left join mt5_symbols on mt5_symbols.symbol = mt4_trades.symbol
@@ -516,7 +546,13 @@ with connection.cursor() as cursor:
             ,if( mu.`GROUP` like '%JPY%','JPY'
             ,'USD'))))) as currency
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZipCode' 
             FROM mt5_deals
             left join mt5_users_view mu on mt5_deals.login = mu.login
             left join mt5_symbols on mt5_symbols.symbol = mt5_deals.symbol
@@ -591,7 +627,13 @@ with connection.cursor() as cursor:
             ,if( mu.`GROUP` like '%JPY%','JPY'
             ,'USD'))))) as currency
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZIPCODE' 
             FROM mt4_trades
             left join mt4_users_view mu on mt4_trades .login = mu.login
             where  mt4_trades.close_time between '"""+date_from+"""' and '"""+date_to+"""'
@@ -800,7 +842,13 @@ with connection.cursor() as cursor:
             if( usg.GroupName like '%JPY%','JPY',
             'USD'))))) as 'currency',
             usg.State as 'State',
-            usg.ZipCode as 'ZipCode',
+            case
+            WHEN usg.state = '268' then '10297-MTA'
+            WHEN usg.state = '231' then '10277-MTA'
+            WHEN usg.state = '210' then '10264-МТА'
+            WHEN usg.state = '294' then '10304MTA'
+            else usg.ZipCode
+            end as 'ZipCode',
             usg.GroupName as 'Group',
             pos.PriceOpen as 'priceopen',
             pos.PriceCurrent as 'pricecurrent',
@@ -829,7 +877,13 @@ with connection.cursor() as cursor:
             ,if( mu.`GROUP` like '%JPY%','JPY'
             ,'USD'))))) as currency
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZipCode' 
             ,mu.`Group`
             ,round(mt5_positions_daily.priceopen,5) as priceopen
             ,round(mt5_positions_daily.pricecurrent,5) as pricecurrent
@@ -923,7 +977,13 @@ with connection.cursor() as cursor:
             ,if( mu.`GROUP` like '%JPY%','JPY'
             ,'USD'))))) as currency
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZIPCODE' 
             ,mt4_open_positions_daily.open_price
             ,mt4_open_positions_daily.close_price as current_price
             ,mt4_open_positions_daily.snapshot_at
@@ -986,7 +1046,13 @@ with connection.cursor() as cursor:
             SELECT
             mt5_deals.deal as deal
             ,mu.state
-            ,mu.zipcode
+            ,case
+            WHEN mu.state = '268' then '10297-MTA'
+            WHEN mu.state = '231' then '10277-MTA'
+            WHEN mu.state = '210' then '10264-МТА'
+            WHEN mu.state = '294' then '10304MTA'
+            else mu.zipcode
+            end as 'ZipCode' 
             ,mt5_deals.login as login
             ,mt5_deals.profit as amount
             ,CASE
@@ -1305,7 +1371,13 @@ with connection.cursor() as cursor:
             SELECT a1.login
             ,a1.`GROUP`
             ,a1.state
-            ,a1.zipcode
+            ,case
+            WHEN a1.state = '268' then '10297-MTA'
+            WHEN a1.state = '231' then '10277-MTA'
+            WHEN a1.state = '210' then '10264-МТА'
+            WHEN a1.state = '294' then '10304MTA'
+            else a1.zipcode
+            end as 'zipcode' 
             ,ifnull(round(a2.balance,2),0) as balance
             ,a1.currency_id
             from
@@ -1326,6 +1398,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login BETWEEN 100000 AND 200000
             UNION
             SELECT 
@@ -1345,6 +1418,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login > 10000
             ) as a1
             left join
@@ -1357,6 +1431,7 @@ with connection.cursor() as cursor:
             and mt.close_time > '1970-01-01 00:00:00'
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             union
             SELECT mt.login
@@ -1367,11 +1442,12 @@ with connection.cursor() as cursor:
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
             and mu.`GROUP` not LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             ) as a2 on a1.login=a2.login
             LEFT JOIN af_lk.customer_view cv ON a1.State = cv.id
             WHERE cv.is_company !=0
-            OR a1.LOGIN IN (815921,815922,815923,815924,815928,815936,815938,815939,815941,815942);
+            OR cv.is_company is null;
     """
     cursor.execute(query)
     balances = cursor.fetchall()
@@ -1466,6 +1542,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login BETWEEN 100000 AND 200000
             UNION
             SELECT 
@@ -1483,6 +1560,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login > 10000
             ) as a1
             left join
@@ -1495,6 +1573,7 @@ with connection.cursor() as cursor:
             and mt.close_time > '1970-01-01 00:00:00'
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             union
             SELECT mt.login
@@ -1505,11 +1584,12 @@ with connection.cursor() as cursor:
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
             and mu.`GROUP` not LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             ) as a2 on a1.login=a2.login
             LEFT JOIN af_lk.customer_view cv ON a1.State = cv.id
             WHERE cv.is_company !=0
-            OR a1.LOGIN IN (815921,815922,815923,815924,815928,815936,815938,815939,815941,815942)
+            OR cv.is_company is null
             GROUP BY a1.currency_id
             ORDER BY FIELD(a1.currency_id, 'USD', 'EUR', 'RUR', 'CHF', 'GBP', 'JPY');
     """
@@ -1537,6 +1617,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login BETWEEN 100000 AND 200000
             UNION
             SELECT 
@@ -1554,6 +1635,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login > 10000
             ) as a1
             left join
@@ -1566,6 +1648,7 @@ with connection.cursor() as cursor:
             and mt.close_time > '1970-01-01 00:00:00'
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             union
             SELECT mt.login
@@ -1576,11 +1659,12 @@ with connection.cursor() as cursor:
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
             and mu.`GROUP` not LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             ) as a2 on a1.login=a2.login
             LEFT JOIN af_lk.customer_view cv ON a1.State = cv.id
             WHERE cv.is_company !=0
-            OR a1.LOGIN IN (815921,815922,815923,815924,815928,815936,815938,815939,815941,815942);
+            OR cv.is_company is null;
     """
     cursor.execute(query)
     currency_sum_balance = cursor.fetchone()
@@ -1616,7 +1700,13 @@ with connection.cursor() as cursor:
     #4 Клиенты, у которых баланс не нулевой на конец месяца
     query = """
             SELECT DISTINCT a1.state
-            ,a1.zipcode
+            ,case
+            WHEN a1.state = '268' then '10297-MTA'
+            WHEN a1.state = '231' then '10277-MTA'
+            WHEN a1.state = '210' then '10264-МТА'
+            WHEN a1.state = '294' then '10304MTA'
+            else a1.zipcode
+            end as 'zipcode' 
             from
             (
             SELECT mu.login
@@ -1626,6 +1716,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login BETWEEN 100000 AND 200000
             UNION
             SELECT 
@@ -1636,6 +1727,7 @@ with connection.cursor() as cursor:
             WHERE mu.`GROUP` NOT LIKE '%TEST%'
             AND mu.`GROUP` NOT LIKE '%Arch%'
             AND mu.`GROUP` NOT LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             AND mu.login > 10000
             ) as a1
             left join
@@ -1648,6 +1740,7 @@ with connection.cursor() as cursor:
             and mt.close_time > '1970-01-01 00:00:00'
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             union
             SELECT mt.login
@@ -1658,11 +1751,12 @@ with connection.cursor() as cursor:
             and mu.`GROUP` not like '%TEST%'
             and mu.`GROUP` not like '%Arch%'
             and mu.`GROUP` not LIKE '%manager%'
+            AND mu.`GROUP` NOT LIKE '%demo%'
             group by  mt.login
             ) as a2 on a1.login=a2.login
             LEFT JOIN af_lk.customer_view cv ON a1.State = cv.id
             WHERE ( cv.is_company !=0
-            OR a1.LOGIN IN (815921,815922,815923,815924,815928,815936,815938,815939,815941,815942))
+            OR cv.is_company is null)
             AND (ifnull(round(a2.balance,2),0) != 0);
     """
     cursor.execute(query)
@@ -1781,7 +1875,8 @@ with connection.cursor() as cursor:
             , 'checked' as status 
             , muv.State as contract_number
             FROM report_new.mt5_users_view muv
-            WHERE muv.Login IN (815921,815922,815923,815924,815928,815936,815938,815939,815941,815942)
+            LEFT JOIN af_lk.customer_view cv ON muv.State = cv.id
+            WHERE cv.is_company is null
     """
     cursor.execute(query)
     companys = cursor.fetchall()

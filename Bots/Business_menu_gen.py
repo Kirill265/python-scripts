@@ -5,6 +5,9 @@ from check_service import \
     check_sites, check_site, check_all, check_monitoring, \
     site_for_check
 
+from check_neto import \
+     check_all_net, all_exposure, by_exposure, by_login
+
 from New_client_weekly import New_client
 from Active_client_report import Active_client
 from Checked_cust_weekly import Check_client
@@ -30,3 +33,9 @@ actions_report = OrderedDict([
     ('Оборот в USD', Volume_period),
 ])
 
+actions_net = OrderedDict([
+    ('все лимиты', check_all_net),
+    ('по ОВП АФ (итог)', all_exposure),
+    ('по ОВП АФ', by_exposure),
+    ('по ОВП клиента', by_login),
+])

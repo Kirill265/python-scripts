@@ -342,7 +342,7 @@ def check_communication(name = ""):
 def check_mt(name = ""):
     try:
         now = datetime.datetime.now()
-        Symbols = ['EURCADrfd','EURRUBrfd','EURUSDrfd','GBPCHFrfd','GBPUSDrfd','NZDUSDrfd','USDCADrfd','USDCHFrfd','USDJPYrfd','USDRUBrfd','AUDUSDrfd','EURGBPrfd','USDZARrfd','AUDCADrfd','EURJPYrfd','GBPJPYrfd','EURCHFrfd','EURNOKrfd','USDMXNrfd','USDNOKrfd','AUDCHFrfd','AUDJPYrfd','AUDNZDrfd','CHFJPYrfd','EURAUDrfd','EURNZDrfd','GBPAUDrfd','GBPCADrfd','GBPNZDrfd']
+        Symbols = ['AUDCADrfd','AUDCHFrfd','AUDJPYrfd','AUDNZDrfd','AUDUSDrfd','CHFJPYrfd','EURAUDrfd','EURCADrfd','EURCHFrfd','EURDKKrfd','EURGBPrfd','EURJPYrfd','EURNOKrfd','EURNZDrfd','EURRUBrfd','EURSEKrfd','EURUSDrfd','GBPAUDrfd','GBPCADrfd','GBPCHFrfd','GBPJPYrfd','GBPNZDrfd','GBPUSDrfd','NZDUSDrfd','USDCADrfd','USDCHFrfd','USDDKKrfd','USDJPYrfd','USDMXNrfd','USDNOKrfd','USDRUBrfd','USDSEKrfd','USDSGDrfd','USDZARrfd']
         direction = os.path.dirname(os.path.abspath(__file__))+'\\'
         path = direction+"MT5_eng_works.json"
         with open(path, encoding="utf-8") as fjson:
@@ -410,7 +410,7 @@ def check_script(scriptName, name = ""):
         return 'Script: '+scriptName + '\nStatus: Disabled'
     except:
         return 'Ошибка в функции *check_script*'
-'''
+
 def check_task(taskName, name = ""):
     try:
         TASK_ENUM_HIDDEN = 1
@@ -435,10 +435,10 @@ def check_task(taskName, name = ""):
             return taskName + ' не найден.'
     except:
         return 'Ошибка в функции *check_task*'
-'''
+
 def check_monitoring(name = ""):
     try:
-        Report = check_script('OnLineCheck', name)
+        Report = check_task('AF_Monitoring', name)
         return Report
     except:
         return 'Ошибка в функции *check_monitoring*'

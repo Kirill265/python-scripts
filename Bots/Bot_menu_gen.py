@@ -10,6 +10,9 @@ from check_service import \
     check_sites, check_site, check_all, check_monitoring, check_bot, \
     site_for_check
 
+from check_neto import \
+     check_all_net, all_exposure, by_exposure, by_login
+
 actions = OrderedDict([
     #('ИНН', inn_entity),
     ('ИНН', inn_individual),
@@ -42,3 +45,9 @@ actions_check = OrderedDict([
     ('Интернет - ресурсы', check_sites),
 ])
 
+actions_net = OrderedDict([
+    ('все лимиты', check_all_net),
+    ('по ОВП АФ (итог)', all_exposure),
+    ('по ОВП АФ', by_exposure),
+    ('по ОВП клиента', by_login),
+])
