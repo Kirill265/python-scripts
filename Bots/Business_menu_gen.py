@@ -35,7 +35,7 @@ actions_report = OrderedDict([
 
 actions_net = OrderedDict([
     ('все лимиты', check_all_net),
-    ('по ОВП АФ (итог)', all_exposure),
+    ('по ОВП АФ (USD)', all_exposure),
     ('по ОВП АФ', by_exposure),
     ('по ОВП клиента', by_login),
 ])

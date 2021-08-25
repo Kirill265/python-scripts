@@ -66,10 +66,15 @@ def passport():
 def address(how = 'full'):
     if how == 'split':
             return Address('ru').city()+" "+Address('ru').street_name()
+    if how == 'all_data':
+        new_address = {"flat":None}
+        while new_address["flat"] == None or new_address["postal_code"] == None or new_address["region_kladr_id"] == None or new_address["region_with_type"] == None or new_address["street_with_type"] == None or new_address["house"] == None:
+            with Dadata(token, secret) as dadata:
+                new_address = dadata.clean(name="address", source=Address('ru').city()+" "+Address('ru').street_name()+" "+str(random.randint(1, 130))+" "+str(random.randint(1, 99)))
+        return new_address
     with Dadata(token, secret) as dadata:
         new_address = dadata.clean(name="address", source=Address('ru').city()+" "+Address('ru').street_name()+" "+str(random.randint(1, 130))+" "+str(random.randint(1, 99)))
     return new_address["result"]
-
 
 # Логин
 def login(): return Person('ru').username()
@@ -93,22 +98,35 @@ def inn_entity(): return inn(10)
 def inn_individual(): return inn(12)
 
 # ФИО
-def full_name():
+def full_name(how = 'only_fio'):
     gend = random.randint(0, 1)
     path = direction+"my_person.json"
+    result = ""
     with open(path, encoding="utf-8") as fjson:
         data = json.load(fjson)
     if gend == 0:
         FIO = re.findall(r'\S+|\s+', Person('ru').full_name(gender=Gender.MALE))
-        return FIO[2] + "`\n`" + FIO[0] + "`\n`" + random.choice(data["middlenames"]["male"])
+        result = FIO[2] + "`\n`" + FIO[0] + "`\n`" + random.choice(data["middlenames"]["male"])
     else:
         FIO = re.findall(r'\S+|\s+', Person('ru').full_name(gender=Gender.FEMALE))
-        return FIO[2] + "`\n`" + FIO[0] + "`\n`" + random.choice(data["middlenames"]["female"])
+        result = FIO[2] + "`\n`" + FIO[0] + "`\n`" + random.choice(data["middlenames"]["female"])
+    if how == 'and_sex':
+        if gend == 0:
+            result += "`\n`MALE"
+        else:
+            result += "`\n`FEMALE"
+    return result
 
 # Дата рождения
 def birdthay():
     random_day = date.fromordinal(random.randint(date.today().replace(year=1950).toordinal(),
                                                  date.today().replace(year=1990).toordinal())).strftime('%d.%m.%Y')
+    return random_day
+
+# Рандомная дата
+def randomday(date1,date2):
+    random_day = date.fromordinal(random.randint(date.today().replace(year=int(date1)).toordinal(),
+                                                 date.today().replace(year=int(date2)).toordinal())).strftime('%d.%m.%Y')
     return random_day
 
 # Проверка на контрольную сумму
@@ -284,3 +302,16 @@ def get_okpo(infividual):
     nums.append(control)
 
     return ''.join([str(x) for x in nums])
+
+def gen_all():
+    all_data = '`'
+    all_data += '__ФИО__:\n`' + full_name() + '`\n\n'
+    all_data += '__Дата рождения__:\n`' + birdthay() + '`\n\n'
+    all_data += '__Место рождения__:\n`' + birthplace() + '`\n\n'
+    all_data += '__E\-mail__:\n`' + mail() + '`\n\n'
+    all_data += '__Телефон__:\n`' + phone() + '`\n\n'
+    all_data += '__Паспорт__:\n`' + passport() + '`\n\n'
+    all_data += '__СНИЛС__:\n`' + snils() + '`\n\n'
+    all_data += '__ИНН__:\n`' + inn_individual() + '`\n\n'
+    all_data += '__Адрес__:\n`' + address()
+    return all_data

@@ -270,6 +270,7 @@ def report_generation(send_info):
                 , m5ad1.Equity
                 FROM mt5_events.mt5accountdaily m5ad1
                 WHERE DATE(DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(m5ad1.TimestampMS/1000 - 3600, 0) SECOND)) = DATE(\""""+date_to+"""\")
+-- WHERE DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(m5ad1.TimestampMS/1000 - 3600, 0) SECOND) BETWEEN DATE_ADD(\""""+date_to+"""\", INTERVAL -1 HOUR) AND DATE_ADD(\""""+date_to+"""\", INTERVAL 1 HOUR)
                 ) AS EquityTo ON a.login = EquityTo.login
                 LEFT JOIN
                 (
@@ -278,6 +279,7 @@ def report_generation(send_info):
                 , m5ad2.Balance
                 FROM mt5_events.mt5accountdaily m5ad2
                 WHERE DATE(DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(m5ad2.TimestampMS/1000 - 3600, 0) SECOND)) = DATE(DATE_ADD(\""""+date_from+"""\", INTERVAL -1 DAY))
+-- WHERE DATE_ADD("1970-01-01 00:00:00", INTERVAL ROUND(m5ad2.TimestampMS/1000 - 3600, 0) SECOND) BETWEEN DATE_ADD(\""""+date_from+"""\", INTERVAL -1 HOUR) AND DATE_ADD(\""""+date_from+"""\", INTERVAL 1 HOUR)
                 ) AS EquityFrom ON a.login = EquityFrom.login
                 WHERE u.utm_source IN ("""+sources_utm+""")
                 ORDER BY Login

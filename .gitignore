@@ -143,6 +143,7 @@ bucket/
 *keepass.py
 *bot_staff_id.json
 *bot_guest_id.json
+*mySSHkey*
 
 # Reports
 Reports/

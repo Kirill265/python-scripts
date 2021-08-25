@@ -22,6 +22,8 @@ now = datetime.datetime.now()
 wday = calendar.weekday(now.year, now.month, now.day)
 if wday in [4,5,6]:
     report_date = now - timedelta(days=(calendar.weekday(now.year, now.month, now.day)-3))
+#if wday in [3,4,5,6]:
+    #report_date = now - timedelta(days=(calendar.weekday(now.year, now.month, now.day)-2))
 else:
     report_date = now - timedelta(days=(calendar.weekday(now.year, now.month, now.day)+4))
 month = month_number_dict[str(report_date.month)]
@@ -79,11 +81,11 @@ Report_24_26 = """[Отчет по агенту 24](https://team.alfaforex.com/s
 
 #agent24"""
 
-telegram_bot(Report_24_26)
+#telegram_bot(Report_24_26)
 #print(Report_24_26)
 
 URL_TW = "https://team.alfaforex.com/servicedesk/view/11160"
 message_text = ''
 attached_file = direction+agent24+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\n"+direction+agent26+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
 
-TW_text_file(URL_TW,message_text,attached_file)
+#TW_text_file(URL_TW,message_text,attached_file)
