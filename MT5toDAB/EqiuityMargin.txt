@@ -1,0 +1,49 @@
+SELECT "md_over"."Deal"
+				, "md_over"."Login" 
+                , "md_over"."obyaz_after" - "md_over"."buysell" AS "obyaz_before"
+				, "md_over"."obyaz_after"
+				, "md_over"."obyaz"
+				, "md_over"."equitydeal"
+				, "md_over"."deltaEquity"
+				, "md_over"."deltaBalance"
+                , "md_over"."TimeMsc"
+				, DATE("md_over"."TimeMsc") AS date_dw
+				FROM (
+SELECT "md_prev".*,
+SUM("md_prev"."buysell") OVER(PARTITION BY "md_prev"."Login" ORDER BY "md_prev"."TimeMsc") AS "obyaz_after",
+SUM("md_prev"."profitOut") OVER(PARTITION BY "md_prev"."Login", DATE("md_prev"."TimeMsc") ORDER BY "md_prev"."TimeMsc") AS "deltaBalance"
+                FROM (
+SELECT "Deal", "Login", "TimeMsc", "Action", 
+-- "Symbol", "RateMargin", "Volume", "MarketBid", "MarketAsk",
+CASE
+WHEN md."Action" = 0 THEN ROUND((md."Volume"*10*md."RateMargin")::numeric,2)
+WHEN md."Action" = 1 THEN ROUND((md."Volume"*(-10)*md."RateMargin")::numeric,2)
+END AS "buysell",
+ROUND((md."Volume"*10*md."RateMargin")::numeric,2) as "obyaz",
+CASE
+WHEN md."Symbol" = 'USDMXNrfd' THEN ROUND((md."Volume"*10*md."RateMargin"/20)::numeric,2)
+WHEN md."Symbol" = 'USDZARrfd' THEN ROUND((md."Volume"*10*md."RateMargin"/20)::numeric,2)
+WHEN md."Symbol" = 'USDDKKrfd' THEN ROUND((md."Volume"*10*md."RateMargin"/10)::numeric,2)
+WHEN md."Symbol" = 'EURDKKrfd' THEN ROUND((md."Volume"*10*md."RateMargin"/10)::numeric,2)
+WHEN md."Symbol" = 'USDSGDrfd' THEN ROUND((md."Volume"*10*md."RateMargin"/10)::numeric,2)
+ELSE ROUND((md."Volume"*10*md."RateMargin"/40)::numeric,2)
+END AS "equitydeal",
+CASE
+WHEN md."Action" not in (1,0) or md."Entry" = 1 THEN 0
+ELSE ROUND((md."Volume"*(md."MarketAsk"-md."MarketBid")*md."RateMargin"/md."Price")::numeric,2)
+END AS "deltaEquity",
+CASE
+WHEN md."Action" = 2 THEN ROUND((md."Profit")::numeric,2)
+ELSE 0
+END AS "profitOut"
+FROM mt5_deals md
+-- WHERE md."Deal" <= 1006273403
+WHERE md."TimeMsc" < '2021-08-20'
+ORDER BY md."Deal" DESC
+-- limit 100				
+ ) AS "md_prev"
+ ) AS "md_over"
+		-- WHERE "md_over"."Deal" BETWEEN 1006273399 AND 1006273403
+		WHERE "md_over"."TimeMsc" < '2021-08-20' and "md_over"."TimeMsc" > '2021-08-18'
+		AND "md_over"."Action" in (0,1)
+		;

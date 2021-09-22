@@ -6,10 +6,11 @@ from datetime import timedelta
 import time
 import shutil
 sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Tools")
+from TeamWox import TW_text_file
 from Telegram_report import telegram_bot
-from like_report_finexpert_Liliya_edition import report_generation
+from like_report_finexpert import report_generation
 
-agent = "Finexpert"
+agent = "Paritet"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
 utm_txt = open(direction+'utm_'+agent+'.txt', 'r')
 sources_utm = utm_txt.read()
@@ -57,7 +58,7 @@ send_info["sql_month"] = sql_month
 send_info["report_date"] = report_date
 return_info = report_generation(send_info)
 
-Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/servicedesk/view/11492)
+Report_finexpert = """[Отчет по Paritet](https://team.alfaforex.com)
 
 Отчетная дата: *"""+msg_to_day+""" """+month+""" """+str(report_date.year)+"""*.
 
@@ -70,3 +71,9 @@ Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/ser
 
 #telegram_bot(Report_finexpert)
 #print(Report_finexpert)
+
+URL_TW = ""
+message_text = ''
+attached_file = direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"+"\n"+direction+agent.lower()+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx"
+
+#TW_text_file(URL_TW,message_text,attached_file)

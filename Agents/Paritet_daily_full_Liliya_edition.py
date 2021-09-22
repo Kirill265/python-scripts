@@ -9,7 +9,7 @@ sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scrip
 from Telegram_report import telegram_bot
 from like_report_finexpert_Liliya_edition import report_generation
 
-agent = "Finexpert"
+agent = "Paritet"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'
 utm_txt = open(direction+'utm_'+agent+'.txt', 'r')
 sources_utm = utm_txt.read()
@@ -57,7 +57,7 @@ send_info["sql_month"] = sql_month
 send_info["report_date"] = report_date
 return_info = report_generation(send_info)
 
-Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/servicedesk/view/11492)
+Report_finexpert = """[Отчет по Paritet](https://team.alfaforex.com)
 
 Отчетная дата: *"""+msg_to_day+""" """+month+""" """+str(report_date.year)+"""*.
 
@@ -66,7 +66,7 @@ Report_finexpert = """[Отчет по Finexpert](https://team.alfaforex.com/ser
 Конвертирующих счетов: *"""+return_info["conv_count"]+"""*
 Вознаграждение за *"""+return_info["reward_count"]+"""* счетов.
 
-#agentFinexpert"""
+#agentParitet"""
 
 #telegram_bot(Report_finexpert)
 #print(Report_finexpert)

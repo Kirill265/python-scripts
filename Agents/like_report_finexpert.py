@@ -455,31 +455,32 @@ def report_generation(send_info):
         convertation_dict = {}
         for convertation in convertations:
             convertation_dict[str(convertation["login"])] = {"out":convertation["volume_out"], "in":convertation["volume_in"], "reward":0.00}
-        query = """
-                SELECT
-                a_to.login AS login	 
-                , CASE
-                WHEN c.operation_type = 'BUY' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from / c.market_rate / 100.0, 2)
-                WHEN c.operation_type = 'SELL' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from * c.market_rate / 100.0, 2)
-                END AS finrez
-                , DATE(c.created_at) as conv_date
-                , a_to.currency AS currency
-                FROM convertation c
-                LEFT JOIN account a_to ON c.account_id_to = a_to.id
-                WHERE c.created_at BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                AND c.status = 3
-                AND a_to.login IN (
-                """+login_for_conv[:-1]+"""
-                ) 
-                ORDER BY a_to.login;
-        """
-        cursor.execute(query)
-        convert_reward = cursor.fetchall()
-        for conv_reward in convert_reward:
-            if conv_reward["currency"] == 'RUB':
-                convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])/2,2)
-            else:
-                convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])*float(currency_dict[conv_reward["currency"]][conv_reward["conv_date"]])/2,2)
+        if login_for_conv[:-1] != '':
+            query = """
+                    SELECT
+                    a_to.login AS login	 
+                    , CASE
+                    WHEN c.operation_type = 'BUY' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from / c.market_rate / 100.0, 2)
+                    WHEN c.operation_type = 'SELL' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from * c.market_rate / 100.0, 2)
+                    END AS finrez
+                    , DATE(c.created_at) as conv_date
+                    , a_to.currency AS currency
+                    FROM convertation c
+                    LEFT JOIN account a_to ON c.account_id_to = a_to.id
+                    WHERE c.created_at BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    AND c.status = 3
+                    AND a_to.login IN (
+                    """+login_for_conv[:-1]+"""
+                    ) 
+                    ORDER BY a_to.login;
+            """
+            cursor.execute(query)
+            convert_reward = cursor.fetchall()
+            for conv_reward in convert_reward:
+                if conv_reward["currency"] == 'RUB':
+                    convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])/2,2)
+                else:
+                    convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])*float(currency_dict[conv_reward["currency"]][conv_reward["conv_date"]])/2,2)
     Postgre_connection.close()
     workbook_sum.close()
     xl = win32com.client.DispatchEx('Excel.Application')
@@ -488,87 +489,88 @@ def report_generation(send_info):
     wb.Close(True)
     xl.Quit()
     with Postgre_connection_2.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:    
-        query = """
-                SELECT mt5a."Login"
-                , ROUND(COALESCE(Dps.Deposit,0)::NUMERIC,2) AS Deposit
-                , ROUND(COALESCE(-Wth.Withdrawal,0)::NUMERIC,2) AS Withdrawal
-                , ROUND(COALESCE(PL.profit,0)::NUMERIC,2) AS Profit
-                FROM mt5_accounts mt5a
-                LEFT JOIN (
-                SELECT "Login", SUM("Profit") AS profit FROM mt5_deals
-                WHERE "Action" IN (0,1,7)
-                AND "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                GROUP BY "Login") AS PL ON mt5a."Login" = PL."Login"
-                LEFT JOIN (
-                SELECT "Login", SUM("Profit") AS Deposit FROM mt5_deals
-                WHERE "Action" = 2
-                AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                AND (
-                "Comment" = ''
-                OR
-                "Comment" LIKE '%Deposit%'
-                OR
-                "Comment" LIKE '%Возврат%'
-                OR
-                "Comment" LIKE '%Refund%'
-                )
-                GROUP BY "Login") AS Dps ON Dps."Login" = mt5a."Login"
-                LEFT JOIN (
-                SELECT "Login", SUM("Profit") AS Withdrawal FROM mt5_deals
-                WHERE "Action" = 2
-                AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                AND (
-                "Comment" LIKE '%Withdrawal%'
-                OR
-                "Comment" LIKE '%Удержание%'
-                OR
-                "Comment" LIKE '%удержание%'
-                )
-                GROUP BY "Login") AS Wth ON Wth."Login" = mt5a."Login" 
-                WHERE mt5a."Login" IN (
-                """+login_for_mt5[:-1]+"""
-                );
-        """
-        cursor.execute(query)
-        OPRDS_plus_PL = cursor.fetchall()
-        OPRDS_PL_dict = {}
-        for OPRDS_PL in OPRDS_plus_PL:
-            OPRDS_PL_dict[str(OPRDS_PL["Login"])] = {"deposit":OPRDS_PL["deposit"], "withdrawal":OPRDS_PL["withdrawal"], "profit":OPRDS_PL["profit"]}
-        query = """
-                SELECT "md_over"."Login", mu."State", mu."FirstName"
-                , ROUND(("md_over"."Balance" - "md_over"."Profit")::numeric, 2) AS "Balance_before"
-                , "md_over"."Profit", "md_over"."TimeMsc", DATE("md_over"."TimeMsc") AS date_dw
-                FROM (
-                SELECT md."Login", md."Profit", md."Comment", md."TimeMsc", md."Action"
-                , SUM(md."Profit") OVER(PARTITION BY md."Login" ORDER BY md."TimeMsc") AS "Balance"
-                FROM mt5_deals md
-                ORDER BY md."Login"
-                ) AS "md_over"
-                LEFT JOIN mt5_users mu ON "md_over"."Login" = mu."Login"
-		WHERE "md_over"."Action" = 2
-                AND  "md_over"."TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                AND (
-                "md_over"."Comment" = ''
-                OR
-                "md_over"."Comment" LIKE '%Deposit%'
-                OR
-                "md_over"."Comment" LIKE '%Возврат%'
-                OR
-                "md_over"."Comment" LIKE '%Refund%'
-		OR
-                "md_over"."Comment" LIKE '%Withdrawal%'
-                OR
-                "md_over"."Comment" LIKE '%Удержание%'
-                OR
-                "md_over"."Comment" LIKE '%удержание%'
-                )
-		AND "md_over"."Login" IN (
-		"""+login_for_mt5[:-1]+"""
-		);
-        """
-        cursor.execute(query)
-        DepositAndWithdrawal = cursor.fetchall()
-    Postgre_connection_2.close()
+        if login_for_mt5[:-1] != '':
+            query = """
+                    SELECT mt5a."Login"
+                    , ROUND(COALESCE(Dps.Deposit,0)::NUMERIC,2) AS Deposit
+                    , ROUND(COALESCE(-Wth.Withdrawal,0)::NUMERIC,2) AS Withdrawal
+                    , ROUND(COALESCE(PL.profit,0)::NUMERIC,2) AS Profit
+                    FROM mt5_accounts mt5a
+                    LEFT JOIN (
+                    SELECT "Login", SUM("Profit") AS profit FROM mt5_deals
+                    WHERE "Action" IN (0,1,7)
+                    AND "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    GROUP BY "Login") AS PL ON mt5a."Login" = PL."Login"
+                    LEFT JOIN (
+                    SELECT "Login", SUM("Profit") AS Deposit FROM mt5_deals
+                    WHERE "Action" = 2
+                    AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    AND (
+                    "Comment" = ''
+                    OR
+                    "Comment" LIKE '%Deposit%'
+                    OR
+                    "Comment" LIKE '%Возврат%'
+                    OR
+                    "Comment" LIKE '%Refund%'
+                    )
+                    GROUP BY "Login") AS Dps ON Dps."Login" = mt5a."Login"
+                    LEFT JOIN (
+                    SELECT "Login", SUM("Profit") AS Withdrawal FROM mt5_deals
+                    WHERE "Action" = 2
+                    AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    AND (
+                    "Comment" LIKE '%Withdrawal%'
+                    OR
+                    "Comment" LIKE '%Удержание%'
+                    OR
+                    "Comment" LIKE '%удержание%'
+                    )
+                    GROUP BY "Login") AS Wth ON Wth."Login" = mt5a."Login" 
+                    WHERE mt5a."Login" IN (
+                    """+login_for_mt5[:-1]+"""
+                    );
+            """
+            cursor.execute(query)
+            OPRDS_plus_PL = cursor.fetchall()
+            OPRDS_PL_dict = {}
+            for OPRDS_PL in OPRDS_plus_PL:
+                OPRDS_PL_dict[str(OPRDS_PL["Login"])] = {"deposit":OPRDS_PL["deposit"], "withdrawal":OPRDS_PL["withdrawal"], "profit":OPRDS_PL["profit"]}
+            query = """
+                    SELECT "md_over"."Login", mu."State", mu."FirstName"
+                    , ROUND(("md_over"."Balance" - "md_over"."Profit")::numeric, 2) AS "Balance_before"
+                    , "md_over"."Profit", "md_over"."TimeMsc", DATE("md_over"."TimeMsc") AS date_dw
+                    FROM (
+                    SELECT md."Login", md."Profit", md."Comment", md."TimeMsc", md."Action"
+                    , SUM(md."Profit") OVER(PARTITION BY md."Login" ORDER BY md."TimeMsc") AS "Balance"
+                    FROM mt5_deals md
+                    ORDER BY md."Login"
+                    ) AS "md_over"
+                    LEFT JOIN mt5_users mu ON "md_over"."Login" = mu."Login"
+                    WHERE "md_over"."Action" = 2
+                    AND  "md_over"."TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    AND (
+                    "md_over"."Comment" = ''
+                    OR
+                    "md_over"."Comment" LIKE '%Deposit%'
+                    OR
+                    "md_over"."Comment" LIKE '%Возврат%'
+                    OR
+                    "md_over"."Comment" LIKE '%Refund%'
+                    OR
+                    "md_over"."Comment" LIKE '%Withdrawal%'
+                    OR
+                    "md_over"."Comment" LIKE '%Удержание%'
+                    OR
+                    "md_over"."Comment" LIKE '%удержание%'
+                    )
+                    AND "md_over"."Login" IN (
+                    """+login_for_mt5[:-1]+"""
+                    );
+            """
+            cursor.execute(query)
+            DepositAndWithdrawal = cursor.fetchall()
+        Postgre_connection_2.close()
     with my_connection.cursor() as cursor:
         query = """
                 SET @@time_zone = "+3:00";
@@ -755,25 +757,26 @@ def report_generation(send_info):
             worksheet_ML.write(f'F{j}', '-',minus)
             worksheet_ML.write(f'G{j}', '-',minus)
         s = 1
-        for DandW in DepositAndWithdrawal:
-            s += 1
-            worksheet_DW.write(f'A{s}', Login_utm_dict[str(DandW["Login"])]["utm"])
-            worksheet_DW.write(f'B{s}', Login_utm_dict[str(DandW["Login"])]["fio"],wrap_format)
-            worksheet_DW.write(f'C{s}', Login_utm_dict[str(DandW["Login"])]["phone"])
-            worksheet_DW.write(f'D{s}', Login_utm_dict[str(DandW["Login"])]["lk"])
-            worksheet_DW.write(f'E{s}', DandW["Login"])
-            worksheet_DW.write(f'F{s}', Login_utm_dict[str(DandW["Login"])]["currency"])
-            worksheet_DW.write(f'G{s}', str(str(DandW["TimeMsc"]).split('.')[0]))
-            worksheet_DW.write(f'H{s}', DandW["Balance_before"],number)
-            worksheet_DW.write(f'I{s}', DandW["Profit"],number)
-            if Login_utm_dict[str(DandW["Login"])]["currency"] == 'RUB':
-                worksheet_DW.write(f'J{s}', round(float(1),4))
-                worksheet_DW.write(f'K{s}', round(float(DandW["Balance_before"]),2),number)
-                worksheet_DW.write(f'L{s}', round(float(DandW["Profit"]),2),number)
-            else:
-                worksheet_DW.write(f'J{s}', round(float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),4),rate)
-                worksheet_DW.write(f'K{s}', round(float(DandW["Balance_before"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
-                worksheet_DW.write(f'L{s}', round(float(DandW["Profit"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
+        if login_for_mt5[:-1] != '':
+            for DandW in DepositAndWithdrawal:
+                s += 1
+                worksheet_DW.write(f'A{s}', Login_utm_dict[str(DandW["Login"])]["utm"])
+                worksheet_DW.write(f'B{s}', Login_utm_dict[str(DandW["Login"])]["fio"],wrap_format)
+                worksheet_DW.write(f'C{s}', Login_utm_dict[str(DandW["Login"])]["phone"])
+                worksheet_DW.write(f'D{s}', Login_utm_dict[str(DandW["Login"])]["lk"])
+                worksheet_DW.write(f'E{s}', DandW["Login"])
+                worksheet_DW.write(f'F{s}', Login_utm_dict[str(DandW["Login"])]["currency"])
+                worksheet_DW.write(f'G{s}', str(str(DandW["TimeMsc"]).split('.')[0]))
+                worksheet_DW.write(f'H{s}', DandW["Balance_before"],number)
+                worksheet_DW.write(f'I{s}', DandW["Profit"],number)
+                if Login_utm_dict[str(DandW["Login"])]["currency"] == 'RUB':
+                    worksheet_DW.write(f'J{s}', round(float(1),4))
+                    worksheet_DW.write(f'K{s}', round(float(DandW["Balance_before"]),2),number)
+                    worksheet_DW.write(f'L{s}', round(float(DandW["Profit"]),2),number)
+                else:
+                    worksheet_DW.write(f'J{s}', round(float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),4),rate)
+                    worksheet_DW.write(f'K{s}', round(float(DandW["Balance_before"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
+                    worksheet_DW.write(f'L{s}', round(float(DandW["Profit"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
         query = """
                 SELECT
                 CONCAT(ci.last_name_ru,' ',ci.first_name_ru,' ',ci.middle_name_ru) AS 'FIO'

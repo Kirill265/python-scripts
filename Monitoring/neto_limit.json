@@ -1,5 +1,5 @@
 {
-	"Total": 100,
+	"Total": 125,
 	"TotalValute": {
 		"EUR": 85,
 		"GBP": 85,
@@ -19,7 +19,7 @@
 	"ClientValute": {
 		"1100003787": {
 			"EUR": 110,
-			"USD": 140,
+			"USD": 115,
 			"GBP": 110,
 			"RUB": 110,
 			"JPY": 110,

@@ -1,0 +1,10 @@
+UPDATE [dbo].[FXOperLog] SET oper_go=879.17, total_go=4202.58, total_go_before=4202.58, total_debt=41.70, total_debt_before=35124.90 WHERE [ticket]=1006273389;
+UPDATE [dbo].[FXOperLog] SET oper_go=103.26, total_go=3362.86, total_go_before=3362.92, total_debt=44347.24, total_debt_before=48477.73 WHERE [ticket]=1006273390;
+UPDATE [dbo].[FXOperLog] SET oper_go=2535.47, total_go=176954.08, total_go_before=176957.03, total_debt=771070.53, total_debt_before=669651.77 WHERE [ticket]=1006273391;
+UPDATE [dbo].[FXOperLog] SET oper_go=34.42, total_go=268.26, total_go_before=268.26, total_debt=1378.95, total_debt_before=2755.58 WHERE [ticket]=1006273392;
+UPDATE [dbo].[FXOperLog] SET oper_go=4317.49, total_go=34617.47, total_go_before=34619.24, total_debt=158703.60, total_debt_before=13996.00 WHERE [ticket]=1006273393;
+UPDATE [dbo].[FXOperLog] SET oper_go=12677.04, total_go=513343.61, total_go_before=513343.61, total_debt=7677694.13, total_debt_before=8184775.55 WHERE [ticket]=1006273394;
+UPDATE [dbo].[FXOperLog] SET oper_go=5525.29, total_go=118796.30, total_go_before=118799.45, total_debt=173035.41, total_debt_before=394046.91 WHERE [ticket]=1006273395;
+UPDATE [dbo].[FXOperLog] SET oper_go=7500.00, total_go=9225.49, total_go_before=9235.67, total_debt=300800.16, total_debt_before=800.16 WHERE [ticket]=1006273396;
+UPDATE [dbo].[FXOperLog] SET oper_go=2159.49, total_go=705918.00, total_go_before=705918.00, total_debt=3320824.00, total_debt_before=3407203.50 WHERE [ticket]=1006273397;
+UPDATE [dbo].[FXOperLog] SET oper_go=125.00, total_go=531.23, total_go_before=531.40, total_debt=2956.64, total_debt_before=7956.64 WHERE [ticket]=1006273398;
