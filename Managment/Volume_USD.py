@@ -63,6 +63,14 @@ def volume_USD(send_info, name=""):
         """
         cursor.execute(query)
         Volumes_USD = cursor.fetchall()
+        query = """
+                SELECT ROUND(SUM(pmd.volume_usd),0) AS volume_usd 
+                FROM platform_mt5_deal pmd
+                WHERE pmd.created_at BETWEEN \""""+date_from+"""\" AND \""""+date_to+"""\"
+                ;
+        """
+        cursor.execute(query)
+        Volumes_all_USD = cursor.fetchone()
         j = 1
         Report = ""
         for Volume_USD in Volumes_USD:
@@ -74,6 +82,8 @@ def volume_USD(send_info, name=""):
                 Report += '\n'+Volume_USD["symbol"]+': \t\t'+str(Volume_USD["volume_usd"])+'.00'
         if name == "":
             workbook.close()
+        else:
+            Report += '\nОбщая сумма: \t\t'+str(Volumes_all_USD["volume_usd"])+'.00'
     connection.close()
     return_dict = {}
     return_dict["count_symbol"] = str(count_symbol["symbols"])

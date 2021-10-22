@@ -180,7 +180,7 @@ with connection.cursor() as cursor:
                 worksheet_login.write(f'K{j}', deal["profit"])
                 worksheet_login.write(f'L{j}', deal["volume_usd"])
                 worksheet_login.write(f'M{j}', deal["expert_position_id"])
-                worksheet_login.write(f'N{j}', '=IF(J'+str(j)+'>=11,L'+str(j)+'/1000000*30,L'+str(j)+'/1000000*25)')
+                worksheet_login.write(f'N{j}', '=IF(J'+str(j)+'>=11,L'+str(j)+'/1000000*40,L'+str(j)+'/1000000*35)')
                 worksheet_login.write(f'O{j}', '=VLOOKUP(H'+str(j)+',\'Курс ЦБ\'!A:B,2,FALSE)')
                 worksheet_login.write(f'P{j}', '= N'+str(j)+'*O'+str(j)+'')
             worksheet_itog.write(f'A{i}',str(login["login"]), border)
@@ -216,10 +216,10 @@ Report_reward = """[Расчет вознаграждения для агент�
 
 Report_TW = 'За '+month+' '+str(report_date.year)
 
-telegram_bot(Report_reward)
+#telegram_bot(Report_reward)
 print(Report_reward)
 
-URL_TW = "https://team.alfaforex.com/servicedesk/view/11278"
+#URL_TW = "https://team.alfaforex.com/servicedesk/view/11278"
 message_text = ''
 attached_file = direction+utm_source["utm_source"]+" "+month+" "+str(report_date.year)+".xlsx"
 

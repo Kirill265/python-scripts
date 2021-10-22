@@ -8,8 +8,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
 from PyQt5.QtWidgets import *
-sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Tools")
-from keepass import key_pass
+
 
 class Form(QMainWindow):
     def getfile(self,message,ftype):
@@ -23,6 +22,13 @@ class Form(QMainWindow):
         while not re.fullmatch(r'\d{10}', deal_id):
             deal_id = QInputDialog.getText(self, title, message)[0]
         return deal_id
+
+def wthdrwl_date(order, date_list):
+    for i in date_list:
+        print(i+'\t'+order)
+        if i > order:
+            return i
+    return order
 
 app = QApplication(sys.argv)
 explorer = Form()
@@ -73,144 +79,6 @@ result_dir = explorer.direct("Укажите путь для сохранени�
 result_dir = os.path.join(result_dir, 'TaxDetail_result')
 if not os.path.exists(result_dir):
     os.mkdir(result_dir)
-
-Deals.columns = Deals.iloc[0]
-
-for (idx, deal) in Deals.iterrows():
-    if 'Withdrawal' in str(deal.loc['Comment']):
-        old_time = datetime.strptime(str(deal.loc['Time']), '%Y.%m.%d %H:%M:%S')
-        new_time = old_time + timedelta(days=1)
-        deal.loc['Time'] = str(new_time).split(" ")[0].replace("-",".")+' 00:00:00'
-    elif 'Rollover commission' in str(deal.loc['Comment']):
-        deal.loc['Time'] = str(deal.loc['Comment']).split(".")[2]+'.'+str(deal.loc['Comment']).split(".")[1]+'.'+str(deal.loc['Comment']).split(".")[0].split(" ")[-1]+' 23:59:59'
-
-Deals = Deals.iloc[1:].sort_values('Time')
-
-rates_list = []
-profit_RUB_list = []
-NOD_current_list = []
-tax_holding_list = []
-tax13_list = []
-tax13_current_list = []
-tax13_holding_list = []
-tax15_list = []
-tax15_current_list = []
-tax15_holding_list = []
-tax_current_list = []
-
-for k in range(len(Deals)):
-    if 'EUR' in currencies and 'USD' in currencies and 'RUB' in currencies:
-        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
-                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ EUR'!A:B,2,0),IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2) \
-                          +""")),O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ USD'!A:B,2,0),IF(AND(OR(D"""+str(k+2) \
-                          +"""="balance",K"""+str(k+2)+"""=0),O"""+str(k+2)+"""<>"RUB"),0,IF(AND(D"""+str(k+2) \
-                          +"""="commission",O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс свопов USD'!A:B,2,0),IF(AND(D"""+str(k+2)+"""="commission",O"""+str(k+2) \
-                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс свопов EUR'!A:B,2,0),IF(O"""+str(k+2) \
-                          +"""="EUR",VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ EUR'!A:B,2,0),IF(O"""+str(k+2) \
-                          +"""="USD",VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ USD'!A:B,2,0),1)))))))""")
-    elif 'EUR' in currencies and 'USD' in currencies:
-        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
-                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ EUR'!A:B,2,0),IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2) \
-                          +""")),O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ USD'!A:B,2,0),IF(OR(D"""+str(k+2) \
-                          +"""="balance",K"""+str(k+2)+"""=0),0,IF(AND(D"""+str(k+2) \
-                          +"""="commission",O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс свопов USD'!A:B,2,0),IF(AND(D"""+str(k+2)+"""="commission",O"""+str(k+2) \
-                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс свопов EUR'!A:B,2,0),IF(O"""+str(k+2) \
-                          +"""="EUR",VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ EUR'!A:B,2,0),IF(O"""+str(k+2) \
-                          +"""="USD",VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ USD'!A:B,2,0),1)))))))""")
-    elif 'EUR' in currencies and 'RUB' in currencies:
-        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
-                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ EUR'!A:B,2,0),IF(AND(OR(D"""+str(k+2) \
-                          +"""="balance",K"""+str(k+2)+"""=0),O"""+str(k+2)+"""<>"RUB"),0,IF(AND(D"""+str(k+2) \
-                          +"""="commission",O"""+str(k+2)+"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс свопов EUR'!A:B,2,0),IF(O"""+str(k+2)+"""="EUR",VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ EUR'!A:B,2,0),1))))""")
-    elif 'USD' in currencies and 'RUB' in currencies:
-        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
-                          +"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
-                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ USD'!A:B,2,0),IF(AND(OR(D"""+str(k+2) \
-                          +"""="balance",K"""+str(k+2)+"""=0),O"""+str(k+2)+"""<>"RUB"),0,IF(AND(D"""+str(k+2) \
-                          +"""="commission",O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс свопов USD'!A:B,2,0),IF(O"""+str(k+2)+"""="USD",VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ USD'!A:B,2,0),1))))""")
-    elif 'EUR' in currencies:
-        rates_list.append("""=IF(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс ЦБ EUR'!A:B,2,0),IF(OR(D"""+str(k+2)+"""="balance",K"""+str(k+2) \
-                          +"""=0),0,IF(D"""+str(k+2)+"""="commission",VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс свопов EUR'!A:B,2,0),VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ EUR'!A:B,2,0))))""")
-    elif 'USD' in currencies:
-        rates_list.append("""=IF(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс ЦБ USD'!A:B,2,0),IF(OR(D"""+str(k+2)+"""="balance",K"""+str(k+2) \
-                          +"""=0),0,IF(D"""+str(k+2)+"""="commission",VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'курс свопов USD'!A:B,2,0),VLOOKUP(VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
-                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
-                          +""",4),'дата исполнения финреза'!A:B,2,0),'курс ЦБ USD'!A:B,2,0))))""")
-    else:
-        rates_list.append("""=1""")
-    profit_RUB_list.append("""=IF(D"""+str(k+2)+"""<>"balance",ROUND(P"""+str(k+2)+"""*K"""+str(k+2)+""",2),0)""")
-    NOD_current_list.append("""=SUM($Q$1:Q"""+str(k+2)+""")""")
-    tax_holding_list.append("""=SUM($V$1:V"""+str(k+1)+""")+SUM($Y$1:Y"""+str(k+1)+""")""")
-    tax13_list.append("""=IF(A"""+str(k+2)+"""<"2020.12.31 00:00:00",Q"""+str(k+2)+"""*0.13,IF(AND(K"""+str(k+2)+""">=0,SUM($Q$2:Q"""+str(k+2)+""")<=5000000),Q"""+str(k+2) \
-                      +"""*0.13,IF(AND(K"""+str(k+2)+""">=0,SUM($Q$2:Q"""+str(k+2)+""")>5000000,SUM($T$1:T"""+str(k+1) \
-                      +""")<650000),650000-SUM($T$1:T"""+str(k+1)+"""),IF(AND(K"""+str(k+2)+"""<0,SUM($Q$2:Q"""+str(k+2) \
-                      +""")<5000000,SUM($T$1:T"""+str(k+1)+""")<650000),Q"""+str(k+2)+"""*0.13,IF(AND(K"""+str(k+2) \
-                      +"""<0,SUM($Q$2:Q"""+str(k+2)+""")<5000000,SUM($T$1:T"""+str(k+1)+""")>=650000),(SUM($Q$2:Q"""+str(k+2) \
-                      +""")-5000000)*0.13,0)))))""")
-    tax13_current_list.append("""=ROUND(SUM($T$2:T"""+str(k+2)+""")-SUM($V$1:V"""+str(k+1)+"""),0)""")
-    tax13_holding_list.append("""=ROUND(IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),U"""+str(k+2) \
-                              +""">0),IF(A"""+str(k+2)+"""<"2021.04.09 00:00:00",MIN(-0.13*K"""+str(k+2) \
-                              +"""*P"""+str(k+2)+""",U"""+str(k+2)+"""+X"""+str(k+2)+"""*13/15),IF((-1)*K"""+str(k+2) \
-                              +"""*P"""+str(k+2)+""">=Z"""+str(k+2)+""",U"""+str(k+2)+""",MIN(-0.13*K"""+str(k+2) \
-                              +"""*P"""+str(k+2)+""",U"""+str(k+2)+"""))),0),0)""")
-    tax15_list.append("""=IF(A"""+str(k+2)+"""<"2020.12.31 00:00:00",0,IF(AND(K"""+str(k+2)+""">=0,SUM($Q$2:Q"""+str(k+2)+""")>5000000,SUM($T$1:T"""+str(k+1) \
-                      +""")>=650000),Q"""+str(k+2)+"""*0.15,IF(AND(K"""+str(k+2)+""">=0,SUM($Q$2:Q"""+str(k+2) \
-                      +""")>5000000,SUM($T$1:T"""+str(k+1)+""")<650000),(SUM($Q$2:Q"""+str(k+2) \
-                      +""")-5000000)*0.15,IF(AND(K"""+str(k+2)+"""<0,SUM($Q$2:Q"""+str(k+2)+""")>5000000),Q"""+str(k+2) \
-                      +"""*0.15,IF(AND(K"""+str(k+2)+"""<0,SUM($Q$2:Q"""+str(k+2)+""")<5000000,SUM($T$1:T"""+str(k+1) \
-                      +""")>=650000),-SUM($W$1:W"""+str(k+1)+"""),0)))))""")
-    tax15_current_list.append("""=ROUND(SUM($W$2:W"""+str(k+2)+""")-SUM($Y$1:Y"""+str(k+1)+"""),0)""")
-    tax15_holding_list.append("""=ROUND(IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),X"""+str(k+2) \
-                              +""">0),IF(A"""+str(k+2)+"""<"2021.04.09 00:00:00",0,IF((-1)*K"""+str(k+2) \
-                              +"""*P"""+str(k+2)+""">Z"""+str(k+2)+""",X"""+str(k+2)+""",IF(0.13*K"""+str(k+2) \
-                              +"""*P"""+str(k+2)+"""+U"""+str(k+2)+""">0,0,0.15*((-1)*K"""+str(k+2) \
-                              +"""*P"""+str(k+2)+"""-U"""+str(k+2)+"""/0.13)))),0),0)""")
-    tax_current_list.append("""=U"""+str(k+2)+"""+X"""+str(k+2)+"""""")
-
-Deals.loc[:, "Курс"] = rates_list
-Deals.loc[:, "Прибыль в рублях"] = profit_RUB_list
-Deals.loc[:, "Налогооблагаемый доход (на момент сделки)"] = NOD_current_list
-Deals.loc[:, "Уже удержанный налог (на момент сделки)"] = tax_holding_list
-Deals.loc[:, "Налог 13% за сделку"] = tax13_list
-Deals.loc[:, "Накопленный налог 13%"] = tax13_current_list
-Deals.loc[:, "Удержано 13% при выводе"] = tax13_holding_list
-Deals.loc[:, "Налог 15% за сделку"] = tax15_list
-Deals.loc[:, "Накопленный налог 15%"] = tax15_current_list
-Deals.loc[:, "Удержано 15% при выводе"] = tax15_holding_list
-Deals.loc[:, "Налог с учетом всех сделок и удержаний"] = tax_current_list
 
 now = datetime.now()
 if max(period_end).split("-")[0] == str(now.year):
@@ -263,6 +131,160 @@ for OPRDS_file in getOPRDS:
     if not cliring_date.empty:
         cliring_date = cliring_date.drop_duplicates(['Дата операции','Дата исполнения'], keep='first')
         cliring_date.sort_values(by='Дата операции')
+    
+    withdrawal_date = oprds.loc[(oprds['Вид сделки/операции'] == 'Приход/Расход ДС - внешний (ЭЦП)')&(oprds['%'] == '100 %'), ['Дата исполнения']]
+    if not withdrawal_date.empty:
+        withdrawal_date = withdrawal_date.drop_duplicates(['Дата исполнения'], keep='first')
+        '''
+        withdrawal_date = withdrawal_date['Дата исполнения'].str.split('.',expand=True)
+        withdrawal_correctdate = withdrawal_date[2]+withdrawal_date[1]+withdrawal_date[0]
+        withdrawal_correctdate.columns=['Дата исполнения']
+        withdrawal_correctdate.sort_values(by='Дата исполнения')
+        '''
+        withdrawal_date_list = withdrawal_date['Дата исполнения'].values.tolist()
+        new_date_list = []
+        for withdrawal in withdrawal_date_list:
+            d, m, y = withdrawal.split('.')
+            new_date_list.append(y+'.'+m+'.'+d)
+        new_date_list.sort()
+
+Deals.columns = Deals.iloc[0]
+
+for (idx, deal) in Deals.iterrows():
+    if 'Withdrawal' in str(deal.loc['Comment']):
+        if withdrawal_date.empty:
+            old_time = datetime.strptime(str(deal.loc['Time']), '%Y.%m.%d %H:%M:%S')
+            new_time = old_time + timedelta(days=1)
+        else:
+            old_time = str(deal.loc['Time']).split(' ')[0]
+            new_time = wthdrwl_date(old_time,new_date_list)
+        deal.loc['Time'] = str(new_time).split(" ")[0].replace("-",".")+' 00:00:00'
+    elif 'Rollover commission' in str(deal.loc['Comment']):
+        deal.loc['Time'] = str(deal.loc['Comment']).split(".")[2]+'.'+str(deal.loc['Comment']).split(".")[1]+'.'+str(deal.loc['Comment']).split(".")[0].split(" ")[-1]+' 23:59:59'
+
+Deals = Deals.iloc[1:].sort_values('Time')
+
+date_list = []
+rates_list = []
+profit_RUB_list = []
+NOD_current_list = []
+tax_holding_list = []
+tax13_list = []
+tax13_current_list = []
+tax13_holding_list = []
+tax15_list = []
+tax15_current_list = []
+tax15_holding_list = []
+tax_current_list = []
+
+for k in range(len(Deals)):
+    date_list.append("""=IF(AND(OR(D"""+str(k+2)+"""="buy",D"""+str(k+2)+"""="sell"),K"""+str(k+2) \
+                     +"""<>0),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                     +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'дата исполнения финреза'!A:B,2,0),"-")""")
+    if 'EUR' in currencies and 'USD' in currencies and 'RUB' in currencies:
+        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
+                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ EUR'!A:B,2,0),IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2) \
+                          +""")),O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ USD'!A:B,2,0),IF(AND(OR(D"""+str(k+2) \
+                          +"""="balance",K"""+str(k+2)+"""=0),O"""+str(k+2)+"""<>"RUB"),0,IF(AND(D"""+str(k+2) \
+                          +"""="commission",O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс свопов USD'!A:B,2,0),IF(AND(D"""+str(k+2)+"""="commission",O"""+str(k+2) \
+                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс свопов EUR'!A:B,2,0),IF(O"""+str(k+2) \
+                          +"""="EUR",VLOOKUP(P"""+str(k+2)+""",'курс ЦБ EUR'!A:B,2,0),IF(O"""+str(k+2) \
+                          +"""="USD",VLOOKUP(P"""+str(k+2)+""",'курс ЦБ USD'!A:B,2,0),1)))))))""")
+    elif 'EUR' in currencies and 'USD' in currencies:
+        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
+                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ EUR'!A:B,2,0),IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2) \
+                          +""")),O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ USD'!A:B,2,0),IF(OR(D"""+str(k+2) \
+                          +"""="balance",K"""+str(k+2)+"""=0),0,IF(AND(D"""+str(k+2) \
+                          +"""="commission",O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс свопов USD'!A:B,2,0),IF(AND(D"""+str(k+2)+"""="commission",O"""+str(k+2) \
+                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс свопов EUR'!A:B,2,0),IF(O"""+str(k+2) \
+                          +"""="EUR",VLOOKUP(P"""+str(k+2)+""",'курс ЦБ EUR'!A:B,2,0),IF(O"""+str(k+2) \
+                          +"""="USD",VLOOKUP(P"""+str(k+2)+""",'курс ЦБ USD'!A:B,2,0),1)))))))""")
+    elif 'EUR' in currencies and 'RUB' in currencies:
+        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
+                          +"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ EUR'!A:B,2,0),IF(AND(OR(D"""+str(k+2) \
+                          +"""="balance",K"""+str(k+2)+"""=0),O"""+str(k+2)+"""<>"RUB"),0,IF(AND(D"""+str(k+2) \
+                          +"""="commission",O"""+str(k+2)+"""="EUR"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс свопов EUR'!A:B,2,0),IF(O"""+str(k+2)+"""="EUR",VLOOKUP(P"""+str(k+2) \
+                          +""",'курс ЦБ EUR'!A:B,2,0),1))))""")
+    elif 'USD' in currencies and 'RUB' in currencies:
+        rates_list.append("""=IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),O"""+str(k+2) \
+                          +"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2)+""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2) \
+                          +""",7),2)&"."&LEFT(A"""+str(k+2)+""",4),'курс ЦБ USD'!A:B,2,0),IF(AND(OR(D"""+str(k+2) \
+                          +"""="balance",K"""+str(k+2)+"""=0),O"""+str(k+2)+"""<>"RUB"),0,IF(AND(D"""+str(k+2) \
+                          +"""="commission",O"""+str(k+2)+"""="USD"),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс свопов USD'!A:B,2,0),IF(O"""+str(k+2)+"""="USD",VLOOKUP(P"""+str(k+2) \
+                          +""",'курс ЦБ USD'!A:B,2,0),1))))""")
+    elif 'EUR' in currencies:
+        rates_list.append("""=IF(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс ЦБ EUR'!A:B,2,0),IF(OR(D"""+str(k+2)+"""="balance",K"""+str(k+2) \
+                          +"""=0),0,IF(D"""+str(k+2)+"""="commission",VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс свопов EUR'!A:B,2,0),VLOOKUP(P"""+str(k+2)+""",'курс ЦБ EUR'!A:B,2,0))))""")
+    elif 'USD' in currencies:
+        rates_list.append("""=IF(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс ЦБ USD'!A:B,2,0),IF(OR(D"""+str(k+2)+"""="balance",K"""+str(k+2) \
+                          +"""=0),0,IF(D"""+str(k+2)+"""="commission",VLOOKUP(RIGHT(LEFT(A"""+str(k+2) \
+                          +""",10),2)&"."&RIGHT(LEFT(A"""+str(k+2)+""",7),2)&"."&LEFT(A"""+str(k+2) \
+                          +""",4),'курс свопов USD'!A:B,2,0),VLOOKUP(P"""+str(k+2)+""",'курс ЦБ USD'!A:B,2,0))))""")
+    else:
+        rates_list.append("""=1""")
+    profit_RUB_list.append("""=IF(D"""+str(k+2)+"""<>"balance",ROUND(Q"""+str(k+2)+"""*K"""+str(k+2)+""",2),0)""")
+    NOD_current_list.append("""=SUM($R$1:R"""+str(k+2)+""")""")
+    tax_holding_list.append("""=SUM($W$1:W"""+str(k+1)+""")+SUM($Z$1:Z"""+str(k+1)+""")""")
+    tax13_list.append("""=IF(A"""+str(k+2)+"""<"2020.12.31 00:00:00",R"""+str(k+2)+"""*0.13,IF(AND(K"""+str(k+2)+""">=0,SUM($R$2:R"""+str(k+2)+""")<=5000000),R"""+str(k+2) \
+                      +"""*0.13,IF(AND(K"""+str(k+2)+""">=0,SUM($R$2:R"""+str(k+2)+""")>5000000,SUM($U$1:U"""+str(k+1) \
+                      +""")<650000),650000-SUM($U$1:U"""+str(k+1)+"""),IF(AND(K"""+str(k+2)+"""<0,SUM($R$2:R"""+str(k+2) \
+                      +""")<5000000,SUM($U$1:U"""+str(k+1)+""")<650000),R"""+str(k+2)+"""*0.13,IF(AND(K"""+str(k+2) \
+                      +"""<0,SUM($R$2:R"""+str(k+2)+""")<5000000,SUM($U$1:U"""+str(k+1)+""")>=650000),(SUM($R$2:R"""+str(k+2) \
+                      +""")-5000000)*0.13,0)))))""")
+    tax13_current_list.append("""=ROUND(SUM($U$2:U"""+str(k+2)+""")-SUM($W$1:W"""+str(k+1)+"""),0)""")
+    tax13_holding_list.append("""=ROUND(IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),V"""+str(k+2) \
+                              +""">0),IF(A"""+str(k+2)+"""<"2021.04.09 00:00:00",MIN(-0.13*K"""+str(k+2) \
+                              +"""*Q"""+str(k+2)+""",V"""+str(k+2)+"""+Y"""+str(k+2)+"""*13/15),IF((-1)*K"""+str(k+2) \
+                              +"""*Q"""+str(k+2)+""">=AA"""+str(k+2)+""",V"""+str(k+2)+""",MIN(-0.13*K"""+str(k+2) \
+                              +"""*Q"""+str(k+2)+""",V"""+str(k+2)+"""))),0),0)""")
+    tax15_list.append("""=IF(A"""+str(k+2)+"""<"2020.12.31 00:00:00",0,IF(AND(K"""+str(k+2)+""">=0,SUM($R$2:R"""+str(k+2)+""")>5000000,SUM($U$1:U"""+str(k+1) \
+                      +""")>=650000),R"""+str(k+2)+"""*0.15,IF(AND(K"""+str(k+2)+""">=0,SUM($R$2:R"""+str(k+2) \
+                      +""")>5000000,SUM($U$1:U"""+str(k+1)+""")<650000),(SUM($R$2:R"""+str(k+2) \
+                      +""")-5000000)*0.15,IF(AND(K"""+str(k+2)+"""<0,SUM($R$2:R"""+str(k+2)+""")>5000000),R"""+str(k+2) \
+                      +"""*0.15,IF(AND(K"""+str(k+2)+"""<0,SUM($R$2:R"""+str(k+2)+""")<5000000,SUM($U$1:U"""+str(k+1) \
+                      +""")>=650000),-SUM($X$1:X"""+str(k+1)+"""),0)))))""")
+    tax15_current_list.append("""=ROUND(SUM($X$2:X"""+str(k+2)+""")-SUM($Z$1:Z"""+str(k+1)+"""),0)""")
+    tax15_holding_list.append("""=ROUND(IF(AND(ISNUMBER(SEARCH("Withdrawal",M"""+str(k+2)+""")),Y"""+str(k+2) \
+                              +""">0),IF(A"""+str(k+2)+"""<"2021.04.09 00:00:00",0,IF((-1)*K"""+str(k+2) \
+                              +"""*Q"""+str(k+2)+""">AA"""+str(k+2)+""",Y"""+str(k+2)+""",IF(0.13*K"""+str(k+2) \
+                              +"""*Q"""+str(k+2)+"""+V"""+str(k+2)+""">0,0,0.15*((-1)*K"""+str(k+2) \
+                              +"""*Q"""+str(k+2)+"""-V"""+str(k+2)+"""/0.13)))),0),0)""")
+    tax_current_list.append("""=V"""+str(k+2)+"""+Y"""+str(k+2)+"""""")
+
+Deals.loc[:, "Дата исполнения финреза"] = date_list
+Deals.loc[:, "Курс"] = rates_list
+Deals.loc[:, "Прибыль в рублях"] = profit_RUB_list
+Deals.loc[:, "Налогооблагаемый доход (на момент сделки)"] = NOD_current_list
+Deals.loc[:, "Уже удержанный налог (на момент сделки)"] = tax_holding_list
+Deals.loc[:, "Налог 13% за сделку"] = tax13_list
+Deals.loc[:, "Накопленный налог 13%"] = tax13_current_list
+Deals.loc[:, "Удержано 13% при выводе"] = tax13_holding_list
+Deals.loc[:, "Налог 15% за сделку"] = tax15_list
+Deals.loc[:, "Накопленный налог 15%"] = tax15_current_list
+Deals.loc[:, "Удержано 15% при выводе"] = tax15_holding_list
+Deals.loc[:, "Налог с учетом всех сделок и удержаний"] = tax_current_list
+
 
 with pd.ExcelWriter(result_dir+'/Налог '+fio.split(" ")[0]+' '+max(period_end).split("-")[0]+' .xlsx') as writer:
     Deals.to_excel(writer,index=False,header=True, sheet_name = 'Налог')

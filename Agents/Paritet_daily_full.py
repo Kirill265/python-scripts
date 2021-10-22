@@ -8,7 +8,7 @@ import shutil
 sys.path.insert(1,os.path.dirname(os.path.abspath(__file__)).split("Python_scripts")[0]+"Python_scripts\\Tools")
 from TeamWox import TW_text_file
 from Telegram_report import telegram_bot
-from like_report_finexpert import report_generation
+from like_report_paritet import report_generation
 
 agent = "Paritet"
 direction = os.path.dirname(os.path.abspath(__file__))+'\\'

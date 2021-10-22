@@ -22,22 +22,23 @@ connection = pymysql.connect(
     cursorclass=DictCursor
 )
 pass_dict = {}
-daterange = pd.date_range('2017-01-01','2021-03-31')
+daterange = pd.date_range('2019-01-01','2021-03-31')
 Symbols_available = ['AUDCADrfd','AUDCHFrfd','AUDJPYrfd','AUDNZDrfd','AUDUSDrfd','CHFJPYrfd','EURAUDrfd','EURCADrfd','EURCHFrfd','EURDKKrfd','EURGBPrfd','EURJPYrfd','EURNOKrfd','EURNZDrfd','EURRUBrfd','EURSEKrfd','EURUSDrfd','GBPAUDrfd','GBPCADrfd','GBPCHFrfd','GBPJPYrfd','GBPNZDrfd','GBPUSDrfd','NZDUSDrfd','USDCADrfd','USDCHFrfd','USDDKKrfd','USDJPYrfd','USDMXNrfd','USDNOKrfd','USDRUBrfd','USDSEKrfd','USDSGDrfd','USDZARrfd']
 with connection.cursor() as cursor:
     for date in daterange:
+        date_utc = date-timedelta(hours=3)
         query = """
-                SELECT * FROM tick WHERE QUOTE_AT_MOMENT(timestamp, '"""+str(date)+"""') ORDER BY symbol;
+                SELECT * FROM tick WHERE QUOTE_AT_MOMENT(timestamp, '"""+str(date_utc)+"""') ORDER BY symbol;
         """
         cursor.execute(query)
         ticks = cursor.fetchall()
         for tick in ticks:
-            if tick["symbol"] in Symbols_available and calendar.weekday(date.year, date.month, date.day) in [1,2,3,4,5] and (str(tick["timestamp"]).split(" ")[0] != str(date-timedelta(days=1)).split(" ")[0] or str(tick["timestamp"]).split(" ")[-1].split(":")[0] != '23' or str(tick["timestamp"]).split(" ")[-1].split(":")[1][0] != '5'):
+            if tick["symbol"] in Symbols_available and calendar.weekday(date_utc.year, date_utc.month, date_utc.day) in [0,1,2,3,4] and (str(tick["timestamp"]).split(" ")[0] != str(date_utc).split(" ")[0] or str(tick["timestamp"]).split(" ")[-1].split(":")[0] != '20' or str(tick["timestamp"]).split(" ")[-1].split(":")[1][0] != '5'):
             #if len(tick["symbol"]) == 9 and (str(tick["timestamp"]).split(" ")[0] != str(date-timedelta(days=1)).split(" ")[0] or str(tick["timestamp"]).split(" ")[-1].split(":")[0] != '23'):
                 if tick["symbol"] not in pass_dict:
-                    pass_dict[tick["symbol"]] = [str(date-timedelta(days=1)) + '\t' + str(tick["timestamp"])]
+                    pass_dict[tick["symbol"]] = [str(date_utc) + '\t' + str(tick["timestamp"])]
                 else:
-                    pass_dict[tick["symbol"]].append(str(date-timedelta(days=1)) + '\t' + str(tick["timestamp"]))
+                    pass_dict[tick["symbol"]].append(str(date_utc) + '\t' + str(tick["timestamp"]))
 for symbol in pass_dict:
     for line in pass_dict[symbol]:
         print(symbol + '\t' + line)

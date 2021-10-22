@@ -4,15 +4,12 @@ import calendar
 import datetime
 from datetime import timedelta
 import xlsxwriter
-import openpyxl
 import pymysql
 import psycopg2
 from psycopg2.extras import DictCursor
 from pymysql.cursors import DictCursor
 import time
 from keepass import key_pass
-from win32com import client
-import win32com
 
 def report_generation(send_info):
     agent = send_info["agent"]
@@ -56,6 +53,10 @@ def report_generation(send_info):
     bold_blue_ = workbook_.add_format({'bold': True, 'fg_color': '#DDEBF7', 'align': 'center','valign': 'vcenter'})
     bold_blue_wrap = workbook_.add_format({'bold': True, 'fg_color': '#DDEBF7', 'align': 'center','valign': 'vcenter'})
     bold_blue_wrap.set_text_wrap()
+    wrap_format = workbook_.add_format()
+    wrap_format.set_text_wrap()
+    wrap_format.set_font_size(8.5)
+    wrap_format.set_font_name('Tahoma')
     number = workbook_.add_format({'num_format': '0.00','align': 'right'})
     rate = workbook_.add_format({'num_format': '0.0000','align': 'right'})
     minus = workbook_.add_format({'align': 'center','valign': 'vcenter'})
@@ -67,118 +68,139 @@ def report_generation(send_info):
     worksheet_PL = workbook_.add_worksheet('PL')
     worksheet_PL.set_row(0, 15)
     worksheet_PL.write('A1', 'UTM', bold_blue_)
+    worksheet_PL.set_column(0, 0, 15)
     worksheet_PL.write('B1', 'FIO', bold_blue_)
-    worksheet_PL.write('C1', 'LK', bold_blue_)
-    worksheet_PL.write('D1', 'Login', bold_blue_)
-    worksheet_PL.write('E1', 'Currency', bold_blue_)
-    worksheet_PL.write('F1', 'Type', bold_blue_)
-    worksheet_PL.set_column(0, 5, 15)
-    worksheet_PL.write('G1', 'Created', bold_blue_)
-    worksheet_PL.set_column(6, 6, 20)
-    worksheet_PL.write('H1', 'Deposit', bold_blue_)
-    worksheet_PL.write('I1', 'Withdrawal', bold_blue_)
-    worksheet_PL.write('J1', 'Volume Lots', bold_blue_)
-    worksheet_PL.set_column(7, 9, 15)
-    worksheet_PL.write('K1', 'Convertation out', bold_blue_)
-    worksheet_PL.write('L1', 'Convertation in', bold_blue_)
-    worksheet_PL.set_column(10, 11, 18)
-    worksheet_PL.write('M1', 'P/L (+Commission)', bold_blue_)
-    worksheet_PL.set_column(12, 12, 20)
-    worksheet_PL.write('N1', 'Equity '+str(report_date.day)+'.'+sql_month, bold_blue_)
-    worksheet_PL.write('O1', 'Balance 1.'+sql_month, bold_blue_)
-    worksheet_PL.write('P1', 'Balance '+str(report_date.day)+'.'+sql_month, bold_blue_)
-    worksheet_PL.write('Q1', 'Rate 1.'+sql_month, bold_blue_)
-    worksheet_PL.write('R1', 'Rate '+str(report_date.day)+'.'+sql_month, bold_blue_)
-    worksheet_PL.set_column(13, 17, 15)
-    worksheet_PL.write('S1', 'Equity '+str(report_date.day)+'.'+sql_month+', RUB', bold_blue_)
-    worksheet_PL.write('T1', 'Balance 1.'+sql_month+', RUB', bold_blue_)
-    worksheet_PL.write('U1', 'Balance '+str(report_date.day)+'.'+sql_month+', RUB', bold_blue_)
-    worksheet_PL.set_column(18, 20, 20)
+    worksheet_PL.set_column(1, 1, 25)
+    worksheet_PL.write('C1', 'Phone number', bold_blue_)
+    worksheet_PL.write('D1', 'Email', bold_blue_)
+    worksheet_PL.set_column(2, 3, 20)
+    worksheet_PL.write('E1', 'LK', bold_blue_)
+    worksheet_PL.write('F1', 'Login', bold_blue_)
+    worksheet_PL.write('G1', 'Currency', bold_blue_)
+    worksheet_PL.write('H1', 'Type', bold_blue_)
+    worksheet_PL.set_column(4, 7, 15)
+    worksheet_PL.write('I1', 'Created', bold_blue_)
+    worksheet_PL.set_column(7, 7, 20)
+    worksheet_PL.write('J1', 'Deposit', bold_blue_)
+    worksheet_PL.write('K1', 'Withdrawal', bold_blue_)
+    worksheet_PL.write('L1', 'Volume Lots', bold_blue_)
+    worksheet_PL.set_column(8, 10, 15)
+    worksheet_PL.write('M1', 'Convertation out', bold_blue_)
+    worksheet_PL.write('N1', 'Convertation in', bold_blue_)
+    worksheet_PL.set_column(11, 12, 18)
+    worksheet_PL.write('O1', 'P/L (+Commission)', bold_blue_)
+    worksheet_PL.set_column(13, 13, 20)
+    worksheet_PL.write('P1', 'Equity '+str(report_date.day)+'.'+sql_month, bold_blue_)
+    worksheet_PL.write('Q1', 'Balance 1.'+sql_month, bold_blue_)
+    worksheet_PL.write('R1', 'Balance '+str(report_date.day)+'.'+sql_month, bold_blue_)
+    worksheet_PL.write('S1', 'Rate 1.'+sql_month, bold_blue_)
+    worksheet_PL.write('T1', 'Rate '+str(report_date.day)+'.'+sql_month, bold_blue_)
+    worksheet_PL.set_column(14, 18, 15)
+    worksheet_PL.write('U1', 'Equity '+str(report_date.day)+'.'+sql_month+', RUB', bold_blue_)
+    worksheet_PL.write('V1', 'Balance 1.'+sql_month+', RUB', bold_blue_)
+    worksheet_PL.write('W1', 'Balance '+str(report_date.day)+'.'+sql_month+', RUB', bold_blue_)
+    worksheet_PL.set_column(19, 21, 20)
     worksheet_Lead = workbook_.add_worksheet('Lead')
     worksheet_Lead.set_row(0, 15)
     worksheet_Lead.write('A1', 'UTM', bold_blue_)
     worksheet_Lead.set_column(0, 0, 9)
-    worksheet_Lead.write('B1', 'FIO', bold_blue_)
-    worksheet_Lead.set_column(1, 1, 30)
-    worksheet_Lead.write('C1', 'Phone', bold_blue_)
-    worksheet_Lead.write('D1', 'Email', bold_blue_)
-    worksheet_Lead.set_column(2, 3, 22)
-    worksheet_Lead.write('E1', 'Communicated', bold_blue_)
-    worksheet_Lead.set_column(4, 4, 20)
-    worksheet_Lead.write('F1', 'Subject', bold_blue_)
-    worksheet_Lead.set_column(5, 5, 15)
-    worksheet_Lead.write('G1', 'LK', bold_blue_)
-    worksheet_Lead.set_column(6, 6, 10)
-    worksheet_Lead.write('H1', 'Created', bold_blue_)
-    worksheet_Lead.set_column(7, 7, 20)
+    worksheet_Lead.write('B1', 'LK', bold_blue_)
+    worksheet_Lead.set_column(1, 1, 10)
+    worksheet_Lead.write('C1', 'Created', bold_blue_)
+    worksheet_Lead.set_column(2, 2, 20)
+    worksheet_Lead.write('D1', 'FIO', bold_blue_)
+    worksheet_Lead.set_column(3, 3, 30)
+    worksheet_Lead.write('E1', 'Phone', bold_blue_)
+    worksheet_Lead.write('F1', 'Email', bold_blue_)
+    worksheet_Lead.set_column(4, 5, 40)
     worksheet_Reward = workbook_.add_worksheet('Reward')
     worksheet_Reward.set_row(0, 15)
     worksheet_Reward.write('A1', 'UTM', bold_blue_)
+    worksheet_Reward.set_column(0, 0, 15)
     worksheet_Reward.write('B1', 'FIO', bold_blue_)
-    worksheet_Reward.write('C1', 'LK', bold_blue_)
-    worksheet_Reward.write('D1', 'Login', bold_blue_)
-    worksheet_Reward.write('E1', 'Currency', bold_blue_)
-    worksheet_Reward.write('F1', 'Volume Lots', bold_blue_)
-    worksheet_Reward.write('G1', 'Volume USD', bold_blue_)
-    worksheet_Reward.set_column(0, 6, 15)
-    worksheet_Reward.write('H1', 'Reward, RUB', bold_blue_)
-    worksheet_Reward.write('I1', 'Reward for convertation, RUB', bold_blue_wrap)
-    worksheet_Reward.set_column(7, 8, 25)
+    worksheet_Reward.set_column(1, 1, 25)
+    worksheet_Reward.write('C1', 'Phone number', bold_blue_)
+    worksheet_Reward.write('D1', 'Email', bold_blue_)
+    worksheet_Reward.set_column(2, 3, 20)
+    worksheet_Reward.write('E1', 'LK', bold_blue_)
+    worksheet_Reward.write('F1', 'Login', bold_blue_)
+    worksheet_Reward.write('G1', 'Currency', bold_blue_)
+    worksheet_Reward.write('H1', 'Volume Lots', bold_blue_)
+    worksheet_Reward.write('I1', 'Volume USD', bold_blue_)
+    worksheet_Reward.set_column(4, 8, 15)
+    worksheet_Reward.write('J1', 'Reward, RUB', bold_blue_)
+    worksheet_Reward.write('K1', 'Reward for convertation, RUB', bold_blue_wrap)
+    worksheet_Reward.set_column(9, 10, 25)
     worksheet_Deals = workbook_.add_worksheet('Deals')
     worksheet_Deals.set_row(0, 15)
     worksheet_Deals.write('A1', 'UTM', bold_blue_)
+    worksheet_Deals.set_column(0, 0, 15)
     worksheet_Deals.write('B1', 'FIO', bold_blue_)
-    worksheet_Deals.write('C1', 'LK', bold_blue_)
-    worksheet_Deals.write('D1', 'Login', bold_blue_)
-    worksheet_Deals.write('E1', 'Currency', bold_blue_)
-    worksheet_Deals.write('F1', 'Deal', bold_blue_)
-    worksheet_Deals.write('G1', 'Order', bold_blue_)
-    worksheet_Deals.set_column(0, 6, 15)
-    worksheet_Deals.write('H1', 'Time', bold_blue_)
-    worksheet_Deals.set_column(7, 7, 20)
-    worksheet_Deals.write('I1', 'Action', bold_blue_)
-    worksheet_Deals.write('J1', 'Entry', bold_blue_)
-    worksheet_Deals.set_column(8, 9, 8.5)
-    worksheet_Deals.write('K1', 'Symbol', bold_blue_)
-    worksheet_Deals.write('L1', 'Volume', bold_blue_)
-    worksheet_Deals.write('M1', 'Volume USD', bold_blue_)
-    worksheet_Deals.write('N1', 'Price', bold_blue_)
-    worksheet_Deals.write('O1', 'Reason', bold_blue_)
-    worksheet_Deals.write('P1', 'Dealer', bold_blue_)
-    worksheet_Deals.write('Q1', 'Profit', bold_blue_)
-    worksheet_Deals.set_column(10, 16, 13)
-    worksheet_Deals.write('R1', 'Rate', bold_blue_)
-    worksheet_Deals.write('S1', 'Profit, RUB', bold_blue_)
-    worksheet_Deals.set_column(17, 18, 15)
+    worksheet_Deals.set_column(1, 1, 25)
+    worksheet_Deals.write('C1', 'Phone number', bold_blue_)
+    worksheet_Deals.write('D1', 'Email', bold_blue_)
+    worksheet_Deals.set_column(2, 3, 20)
+    worksheet_Deals.write('E1', 'LK', bold_blue_)
+    worksheet_Deals.write('F1', 'Login', bold_blue_)
+    worksheet_Deals.write('G1', 'Currency', bold_blue_)
+    worksheet_Deals.write('H1', 'Deal', bold_blue_)
+    worksheet_Deals.write('I1', 'Order', bold_blue_)
+    worksheet_Deals.set_column(4, 8, 15)
+    worksheet_Deals.write('J1', 'Time', bold_blue_)
+    worksheet_Deals.set_column(9, 9, 20)
+    worksheet_Deals.write('K1', 'Action', bold_blue_)
+    worksheet_Deals.write('L1', 'Entry', bold_blue_)
+    worksheet_Deals.set_column(10, 11, 8.5)
+    worksheet_Deals.write('M1', 'Symbol', bold_blue_)
+    worksheet_Deals.write('N1', 'Volume', bold_blue_)
+    worksheet_Deals.write('O1', 'Volume USD', bold_blue_)
+    worksheet_Deals.write('P1', 'Price', bold_blue_)
+    worksheet_Deals.write('Q1', 'Reason', bold_blue_)
+    worksheet_Deals.write('R1', 'Dealer', bold_blue_)
+    worksheet_Deals.write('S1', 'Profit', bold_blue_)
+    worksheet_Deals.set_column(11, 18, 13)
+    worksheet_Deals.write('T1', 'Rate', bold_blue_)
+    worksheet_Deals.write('U1', 'Profit, RUB', bold_blue_)
+    worksheet_Deals.set_column(19, 20, 15)
     worksheet_DW = workbook_.add_worksheet('DepositWithdrawal')
     worksheet_DW.set_row(0, 15)
     worksheet_DW.write('A1', 'UTM', bold_blue_)
+    worksheet_DW.set_column(0, 0, 15)
     worksheet_DW.write('B1', 'FIO', bold_blue_)
-    worksheet_DW.write('C1', 'LK', bold_blue_)
-    worksheet_DW.write('D1', 'Login', bold_blue_)
-    worksheet_DW.write('E1', 'Currency', bold_blue_)
-    worksheet_DW.set_column(0, 4, 15)
-    worksheet_DW.write('F1', 'Time', bold_blue_)
-    worksheet_DW.write('G1', 'Balance before', bold_blue_)
-    worksheet_DW.set_column(5, 6, 20)
-    worksheet_DW.write('H1', 'Deposit / Withdrawal', bold_blue_)
-    worksheet_DW.set_column(7, 7, 25)
-    worksheet_DW.write('I1', 'Rate', bold_blue_)
-    worksheet_DW.set_column(8, 8, 15)
-    worksheet_DW.write('J1', 'Balance before, RUB', bold_blue_)
-    worksheet_DW.set_column(9, 9, 25)
-    worksheet_DW.write('K1', 'Deposit / Withdrawal, RUB', bold_blue_)
-    worksheet_DW.set_column(10, 10, 30)
+    worksheet_DW.set_column(1, 1, 15)
+    worksheet_DW.write('C1', 'Phone number', bold_blue_)
+    worksheet_DW.write('D1', 'Email', bold_blue_)
+    worksheet_DW.set_column(2, 3, 20)
+    worksheet_DW.write('E1', 'LK', bold_blue_)
+    worksheet_DW.write('F1', 'Login', bold_blue_)
+    worksheet_DW.write('G1', 'Currency', bold_blue_)
+    worksheet_DW.set_column(4, 6, 15)
+    worksheet_DW.write('H1', 'Time', bold_blue_)
+    worksheet_DW.write('I1', 'Balance before', bold_blue_)
+    worksheet_DW.set_column(7, 8, 20)
+    worksheet_DW.write('J1', 'Deposit / Withdrawal', bold_blue_)
+    worksheet_DW.set_column(9,9, 25)
+    worksheet_DW.write('K1', 'Rate', bold_blue_)
+    worksheet_DW.set_column(10, 10, 15)
+    worksheet_DW.write('L1', 'Balance before, RUB', bold_blue_)
+    worksheet_DW.set_column(11, 11, 25)
+    worksheet_DW.write('M1', 'Deposit / Withdrawal, RUB', bold_blue_)
+    worksheet_DW.set_column(12, 12, 30)
     worksheet_ML = workbook_.add_worksheet('Margin Level')
     worksheet_ML.set_row(0, 15)
     worksheet_ML.write('A1', 'UTM', bold_blue_)
+    worksheet_ML.set_column(0, 0, 15)
     worksheet_ML.write('B1', 'FIO', bold_blue_)
-    worksheet_ML.write('C1', 'LK', bold_blue_)
-    worksheet_ML.write('D1', 'Login', bold_blue_)
-    worksheet_ML.write('E1', 'Currency', bold_blue_)
-    worksheet_ML.set_column(0, 4, 15)
-    worksheet_ML.write('F1', 'Margin Level '+str(report_date.day)+'.'+sql_month, bold_blue_)
-    worksheet_ML.set_column(5, 5, 20)
+    worksheet_ML.set_column(1, 1, 25)
+    worksheet_ML.write('C1', 'Phone number', bold_blue_)
+    worksheet_ML.write('D1', 'Email', bold_blue_)
+    worksheet_ML.set_column(2, 3, 20)
+    worksheet_ML.write('E1', 'LK', bold_blue_)
+    worksheet_ML.write('F1', 'Login', bold_blue_)
+    worksheet_ML.write('G1', 'Currency', bold_blue_)
+    worksheet_ML.set_column(4, 6, 15)
+    worksheet_ML.write('H1', 'Margin Level '+str(report_date.day)+'.'+sql_month, bold_blue_)
+    worksheet_ML.set_column(7, 7, 20)
     workbook_sum = xlsxwriter.Workbook(direction+agent.lower()+' рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx')
     border_sum = workbook_sum.add_format({'border': 1,'align': 'center','valign': 'vcenter'})
     rub = workbook_sum.add_format({'num_format': '0.00"₽"'})
@@ -448,78 +470,76 @@ def report_generation(send_info):
         convertation_dict = {}
         for convertation in convertations:
             convertation_dict[str(convertation["login"])] = {"out":convertation["volume_out"], "in":convertation["volume_in"], "reward":0.00}
-        query = """
-                SELECT
-                a_to.login AS login	 
-                , CASE
-                WHEN c.operation_type = 'BUY' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from / c.market_rate / 100.0, 2)
-                WHEN c.operation_type = 'SELL' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from * c.market_rate / 100.0, 2)
-                END AS finrez
-                , DATE(c.created_at) as conv_date
-                , a_to.currency AS currency
-                FROM convertation c
-                LEFT JOIN account a_to ON c.account_id_to = a_to.id
-                WHERE c.created_at BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                AND c.status = 3
-                AND a_to.login IN (
-                """+login_for_conv[:-1]+"""
-                ) 
-                ORDER BY a_to.login;
-        """
-        cursor.execute(query)
-        convert_reward = cursor.fetchall()
-        for conv_reward in convert_reward:
-            if conv_reward["currency"] == 'RUB':
-                convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])/2,2)
-            else:
-                convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])*float(currency_dict[conv_reward["currency"]][conv_reward["conv_date"]])/2,2)
+        if login_for_conv[:-1] != '':
+            query = """
+                    SELECT
+                    a_to.login AS login	 
+                    , CASE
+                    WHEN c.operation_type = 'BUY' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from / c.market_rate / 100.0, 2)
+                    WHEN c.operation_type = 'SELL' THEN ROUND(c.amount_to / 100.0, 2) - ROUND(c.amount_from * c.market_rate / 100.0, 2)
+                    END AS finrez
+                    , DATE(c.created_at) as conv_date
+                    , a_to.currency AS currency
+                    FROM convertation c
+                    LEFT JOIN account a_to ON c.account_id_to = a_to.id
+                    WHERE c.created_at BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    AND c.status = 3
+                    AND a_to.login IN (
+                    """+login_for_conv[:-1]+"""
+                    ) 
+                    ORDER BY a_to.login;
+            """
+            cursor.execute(query)
+            convert_reward = cursor.fetchall()
+            for conv_reward in convert_reward:
+                if conv_reward["currency"] == 'RUB':
+                    convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])/2,2)
+                else:
+                    convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])*float(currency_dict[conv_reward["currency"]][conv_reward["conv_date"]])/2,2)
     Postgre_connection.close()
     workbook_sum.close()
-    xl = win32com.client.DispatchEx('Excel.Application')
-    xl.Visible = False
-    wb = xl.Workbooks.Open(direction+agent+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx")
-    wb.Close(True)
-    with Postgre_connection_2.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:    
-        query = """
-                SELECT mt5a."Login"
-                , ROUND(COALESCE(Dps.Deposit,0)::NUMERIC,2) AS Deposit
-                , ROUND(COALESCE(-Wth.Withdrawal,0)::NUMERIC,2) AS Withdrawal
-                , ROUND(COALESCE(PL.profit,0)::NUMERIC,2) AS Profit
-                FROM mt5_accounts mt5a
-                LEFT JOIN (
-                SELECT "Login", SUM("Profit") AS profit FROM mt5_deals
-                WHERE "Action" IN (0,1,7)
-                AND "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                GROUP BY "Login") AS PL ON mt5a."Login" = PL."Login"
-                LEFT JOIN (
-                SELECT "Login", SUM("Profit") AS Deposit FROM mt5_deals
-                WHERE "Action" = 2
-                AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                AND (
-                "Comment" = ''
-                OR
-                "Comment" LIKE '%Deposit%'
-                OR
-                "Comment" LIKE '%Возврат%'
-                OR
-                "Comment" LIKE '%Refund%'
-                )
-                GROUP BY "Login") AS Dps ON Dps."Login" = mt5a."Login"
-                LEFT JOIN (
-                SELECT "Login", SUM("Profit") AS Withdrawal FROM mt5_deals
-                WHERE "Action" = 2
-                AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
-                AND (
-                "Comment" LIKE '%Withdrawal%'
-                OR
-                "Comment" LIKE '%Удержание%'
-                OR
-                "Comment" LIKE '%удержание%'
-                )
-                GROUP BY "Login") AS Wth ON Wth."Login" = mt5a."Login" 
-                WHERE mt5a."Login" IN (
-                """+login_for_mt5[:-1]+"""
-                );
+    with Postgre_connection_2.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        if login_for_mt5[:-1] != '':    
+            query = """
+                    SELECT mt5a."Login"
+                    , ROUND(COALESCE(Dps.Deposit,0)::NUMERIC,2) AS Deposit
+                    , ROUND(COALESCE(-Wth.Withdrawal,0)::NUMERIC,2) AS Withdrawal
+                    , ROUND(COALESCE(PL.profit,0)::NUMERIC,2) AS Profit
+                    FROM mt5_accounts mt5a
+                    LEFT JOIN (
+                    SELECT "Login", SUM("Profit") AS profit FROM mt5_deals
+                    WHERE "Action" IN (0,1,7)
+                    AND "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    GROUP BY "Login") AS PL ON mt5a."Login" = PL."Login"
+                    LEFT JOIN (
+                    SELECT "Login", SUM("Profit") AS Deposit FROM mt5_deals
+                    WHERE "Action" = 2
+                    AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    AND (
+                    "Comment" = ''
+                    OR
+                    "Comment" LIKE '%Deposit%'
+                    OR
+                    "Comment" LIKE '%Возврат%'
+                    OR
+                    "Comment" LIKE '%Refund%'
+                    )
+                    GROUP BY "Login") AS Dps ON Dps."Login" = mt5a."Login"
+                    LEFT JOIN (
+                    SELECT "Login", SUM("Profit") AS Withdrawal FROM mt5_deals
+                    WHERE "Action" = 2
+                    AND  "TimeMsc" BETWEEN \'"""+date_from+"""\' AND \'"""+date_to+"""\'
+                    AND (
+                    "Comment" LIKE '%Withdrawal%'
+                    OR
+                    "Comment" LIKE '%Удержание%'
+                    OR
+                    "Comment" LIKE '%удержание%'
+                    )
+                    GROUP BY "Login") AS Wth ON Wth."Login" = mt5a."Login" 
+                    WHERE mt5a."Login" IN (
+                    """+login_for_mt5[:-1]+"""
+                    );
         """
         cursor.execute(query)
         OPRDS_plus_PL = cursor.fetchall()
@@ -569,7 +589,9 @@ def report_generation(send_info):
         query = """
                 SELECT a.login AS 'Login'
                 , a.created_at AS 'Create'
-                , CONCAT(ci.last_name_ru,' ',SUBSTRING(ci.first_name_ru,1,1),'.',SUBSTRING(ci.middle_name_ru,1,1),'.') AS 'FIO'
+                , CONCAT(ci.last_name_ru,' ',ci.first_name_ru,' ',ci.middle_name_ru) AS 'FIO'
+                , cus.mobile_phone AS 'Phone'
+                , cus.email AS 'Email'
                 , u.utm_source AS 'UTM'
                 , a.customer_id AS 'LK'
                 , CASE
@@ -589,6 +611,7 @@ def report_generation(send_info):
                 , IFNULL(ROUND(EquityTo.MarginLevel/100,4),0) AS Margin_Level
                 FROM account a
                 LEFT JOIN currency c ON a.currency_id = c.id
+                LEFT JOIN customer cus ON a.customer_id = cus.id
                 LEFT JOIN customer_individual ci ON a.customer_id = ci.customer_id
                 LEFT JOIN customer_utm cu ON a.customer_id = cu.customer_id
                 LEFT JOIN utm u ON cu.utm_id = u.id
@@ -624,67 +647,69 @@ def report_generation(send_info):
          """
         cursor.execute(query)
         PL_all = cursor.fetchall()
-        wb = openpyxl.load_workbook(direction+agent+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx",data_only=True)
         Login_utm_dict = {}
         j = 1
         for PL_one in PL_all:
             j += 1
-            Login_utm_dict[str(PL_one["Login"])] = {"utm":PL_one["UTM"],"fio":PL_one["FIO"],"lk":PL_one["LK"],"currency":PL_one["Currency"]}
+            Login_utm_dict[str(PL_one["Login"])] = {"utm":PL_one["UTM"],"fio":PL_one["FIO"],"phone":PL_one["Phone"],"email":PL_one["Email"],"lk":PL_one["LK"],"currency":PL_one["Currency"]}
             worksheet_PL.write(f'A{j}', PL_one["UTM"])
-            worksheet_PL.write(f'B{j}', PL_one["FIO"])
-            worksheet_PL.write(f'C{j}', PL_one["LK"])
-            worksheet_PL.write(f'D{j}', PL_one["Login"])
-            worksheet_PL.write(f'E{j}', PL_one["Currency"])
-            worksheet_PL.write(f'F{j}', PL_one["Type"])
-            worksheet_PL.write(f'G{j}', str(PL_one["Create"]))
-            worksheet_PL.write(f'H{j}', OPRDS_PL_dict[str(PL_one["Login"])]["deposit"], number)
-            worksheet_PL.write(f'I{j}', OPRDS_PL_dict[str(PL_one["Login"])]["withdrawal"], number)
-            worksheet_PL.write(f'J{j}', PL_one["Volume_Lots"], number)
+            worksheet_PL.write(f'B{j}', PL_one["FIO"],wrap_format)
+            worksheet_PL.write(f'C{j}', PL_one["Phone"])
+            worksheet_PL.write(f'D{j}', PL_one["Email"])
+            worksheet_PL.write(f'E{j}', PL_one["LK"])
+            worksheet_PL.write(f'F{j}', PL_one["Login"])
+            worksheet_PL.write(f'G{j}', PL_one["Currency"])
+            worksheet_PL.write(f'H{j}', PL_one["Type"])
+            worksheet_PL.write(f'I{j}', str(PL_one["Create"]))
+            worksheet_PL.write(f'J{j}', OPRDS_PL_dict[str(PL_one["Login"])]["deposit"], number)
+            worksheet_PL.write(f'K{j}', OPRDS_PL_dict[str(PL_one["Login"])]["withdrawal"], number)
+            worksheet_PL.write(f'L{j}', PL_one["Volume_Lots"], number)
             try:
-                worksheet_PL.write(f'K{j}', convertation_dict[str(PL_one["Login"])]["out"], number)
-                worksheet_PL.write(f'L{j}', convertation_dict[str(PL_one["Login"])]["in"], number)
+                worksheet_PL.write(f'M{j}', convertation_dict[str(PL_one["Login"])]["out"], number)
+                worksheet_PL.write(f'N{j}', convertation_dict[str(PL_one["Login"])]["in"], number)
             except KeyError:
-                worksheet_PL.write(f'K{j}', 0.00, number)
-                worksheet_PL.write(f'L{j}', 0.00, number)
-            worksheet_PL.write(f'M{j}', OPRDS_PL_dict[str(PL_one["Login"])]["profit"], number)
-            worksheet_PL.write(f'N{j}', PL_one["Equity_to"], number)
-            worksheet_PL.write(f'O{j}', PL_one["Balance_from"], number)
-            worksheet_PL.write(f'P{j}', PL_one["Balance_to"], number)
-            worksheet_PL.write(f'Q{j}', PL_one["CBR_from"], rate)
-            worksheet_PL.write(f'R{j}', PL_one["CBR_to"], rate)
-            worksheet_PL.write(f'S{j}', PL_one["Equity_rub_to"], number)
-            worksheet_PL.write(f'T{j}', PL_one["Balance_rub_from"], number)
-            worksheet_PL.write(f'U{j}', PL_one["Balance_rub_to"], number)
+                worksheet_PL.write(f'M{j}', 0.00, number)
+                worksheet_PL.write(f'N{j}', 0.00, number)
+            worksheet_PL.write(f'O{j}', OPRDS_PL_dict[str(PL_one["Login"])]["profit"], number)
+            worksheet_PL.write(f'P{j}', PL_one["Equity_to"], number)
+            worksheet_PL.write(f'Q{j}', PL_one["Balance_from"], number)
+            worksheet_PL.write(f'R{j}', PL_one["Balance_to"], number)
+            worksheet_PL.write(f'S{j}', PL_one["CBR_from"], rate)
+            worksheet_PL.write(f'T{j}', PL_one["CBR_to"], rate)
+            worksheet_PL.write(f'U{j}', PL_one["Equity_rub_to"], number)
+            worksheet_PL.write(f'V{j}', PL_one["Balance_rub_from"], number)
+            worksheet_PL.write(f'W{j}', PL_one["Balance_rub_to"], number)
             worksheet_Reward.write(f'A{j}', PL_one["UTM"])
-            worksheet_Reward.write(f'B{j}', PL_one["FIO"])
-            worksheet_Reward.write(f'C{j}', PL_one["LK"])
-            worksheet_Reward.write(f'D{j}', PL_one["Login"])
-            worksheet_Reward.write(f'E{j}', PL_one["Currency"])
-            worksheet_Reward.write(f'F{j}', PL_one["Volume_Lots"], number)
+            worksheet_Reward.write(f'B{j}', PL_one["FIO"],wrap_format)
+            worksheet_Reward.write(f'C{j}', PL_one["Phone"])
+            worksheet_Reward.write(f'D{j}', PL_one["Email"])
+            worksheet_Reward.write(f'E{j}', PL_one["LK"])
+            worksheet_Reward.write(f'F{j}', PL_one["Login"])
+            worksheet_Reward.write(f'G{j}', PL_one["Currency"])
+            worksheet_Reward.write(f'H{j}', PL_one["Volume_Lots"], number)
             if str(PL_one["Login"]) in login_list:
-                sheet = wb[str(PL_one["Login"])]
-                RewardSelected = sheet.cell(row = 3, column = 22).value
-                in_USD = round(RewardSelected*1000000/20,2)
-                worksheet_Reward.write(f'G{j}', '='+str(in_USD), number)
-                RewardSelected = sheet.cell(row = 3, column = 23).value
-                in_RUB = round(RewardSelected,2)
-                worksheet_Reward.write(f'H{j}', '='+str(in_RUB), number)
+                worksheet_Reward.write(f'I{j}', '=\'['+agent+' рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx]'+str(PL_one["Login"])+'\'!$V$3*1000000/20', number)
+                worksheet_Reward.write(f'J{j}', '=\'['+agent+' рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx]'+str(PL_one["Login"])+'\'!$W$3', number)
             else:
-                worksheet_Reward.write(f'G{j}', 0.00, number)
-                worksheet_Reward.write(f'H{j}', 0.00, number)
-            try:
-                worksheet_Reward.write(f'I{j}', convertation_dict[str(PL_one["Login"])]["reward"], number)
-            except KeyError:
                 worksheet_Reward.write(f'I{j}', 0.00, number)
+                worksheet_Reward.write(f'J{j}', 0.00, number)
+            try:
+                worksheet_Reward.write(f'K{j}', convertation_dict[str(PL_one["Login"])]["reward"], number)
+            except KeyError:
+                worksheet_Reward.write(f'K{j}', 0.00, number)
             worksheet_ML.write(f'A{j}', PL_one["UTM"])
-            worksheet_ML.write(f'B{j}', PL_one["FIO"])
-            worksheet_ML.write(f'C{j}', PL_one["LK"])
-            worksheet_ML.write(f'D{j}', PL_one["Login"])
-            worksheet_ML.write(f'E{j}', PL_one["Currency"])
-            worksheet_ML.write(f'F{j}', PL_one["Margin_Level"],percentage)
+            worksheet_ML.write(f'B{j}', PL_one["FIO"],wrap_format)
+            worksheet_ML.write(f'C{j}', PL_one["Phone"])
+            worksheet_ML.write(f'D{j}', PL_one["Email"])
+            worksheet_ML.write(f'E{j}', PL_one["LK"])
+            worksheet_ML.write(f'F{j}', PL_one["Login"])
+            worksheet_ML.write(f'G{j}', PL_one["Currency"])
+            worksheet_ML.write(f'H{j}', PL_one["Margin_Level"],percentage)
         query = """
                 SELECT c.created_at AS 'Create'
-                , CONCAT(ci.last_name_ru,' ',SUBSTRING(ci.first_name_ru,1,1),'.',SUBSTRING(ci.middle_name_ru,1,1),'.') AS 'FIO'
+                , CONCAT(ci.last_name_ru,' ',ci.first_name_ru,' ',ci.middle_name_ru) AS 'FIO'
+                , c.mobile_phone AS 'Phone'
+                , c.email AS 'Email'
                 , u.utm_source AS 'UTM'
                 , c.id AS 'LK'
                 FROM customer_utm cu
@@ -701,15 +726,15 @@ def report_generation(send_info):
         for customerID in customerID_all:
             j += 1
             worksheet_PL.write(f'A{j}', customerID["UTM"])
-            worksheet_PL.write(f'B{j}', customerID["FIO"])
-            worksheet_PL.write(f'C{j}', customerID["LK"])
-            worksheet_PL.write(f'D{j}', '-',minus)
-            worksheet_PL.write(f'E{j}', '-',minus)
+            worksheet_PL.write(f'B{j}', customerID["FIO"],wrap_format)
+            worksheet_PL.write(f'C{j}', customerID["Phone"])
+            worksheet_PL.write(f'D{j}', customerID["Email"])
+            worksheet_PL.write(f'E{j}', customerID["LK"])
             worksheet_PL.write(f'F{j}', '-',minus)
-            #worksheet_PL.write(f'G{j}', '-',minus)
-            worksheet_PL.write(f'G{j}', str(customerID["Create"]))
+            worksheet_PL.write(f'G{j}', '-',minus)
             worksheet_PL.write(f'H{j}', '-',minus)
-            worksheet_PL.write(f'I{j}', '-',minus)
+            #worksheet_PL.write(f'H{j}', '-',minus)
+            worksheet_PL.write(f'I{j}', str(customerID["Create"]))
             worksheet_PL.write(f'J{j}', '-',minus)
             worksheet_PL.write(f'K{j}', '-',minus)
             worksheet_PL.write(f'L{j}', '-',minus)
@@ -722,43 +747,54 @@ def report_generation(send_info):
             worksheet_PL.write(f'S{j}', '-',minus)
             worksheet_PL.write(f'T{j}', '-',minus)
             worksheet_PL.write(f'U{j}', '-',minus)
+            worksheet_PL.write(f'V{j}', '-',minus)
+            worksheet_PL.write(f'W{j}', '-',minus)
             worksheet_Reward.write(f'A{j}', customerID["UTM"])
-            worksheet_Reward.write(f'B{j}', customerID["FIO"])
-            worksheet_Reward.write(f'C{j}', customerID["LK"])
-            worksheet_Reward.write(f'D{j}', '-',minus)
-            worksheet_Reward.write(f'E{j}', '-',minus)
+            worksheet_Reward.write(f'B{j}', customerID["FIO"],wrap_format)
+            worksheet_Reward.write(f'C{j}', customerID["Phone"])
+            worksheet_Reward.write(f'D{j}', customerID["Email"])
+            worksheet_Reward.write(f'E{j}', customerID["LK"])
             worksheet_Reward.write(f'F{j}', '-',minus)
             worksheet_Reward.write(f'G{j}', '-',minus)
             worksheet_Reward.write(f'H{j}', '-',minus)
             worksheet_Reward.write(f'I{j}', '-',minus)
+            worksheet_Reward.write(f'J{j}', '-',minus)
+            worksheet_Reward.write(f'K{j}', '-',minus)
             worksheet_ML.write(f'A{j}', customerID["UTM"])
-            worksheet_ML.write(f'B{j}', customerID["FIO"])
-            worksheet_ML.write(f'C{j}', customerID["LK"])
-            worksheet_ML.write(f'D{j}', '-',minus)
-            worksheet_ML.write(f'E{j}', '-',minus)
+            worksheet_ML.write(f'B{j}', customerID["FIO"],wrap_format)
+            worksheet_ML.write(f'C{j}', customerID["Phone"])
+            worksheet_ML.write(f'D{j}', customerID["Email"])
+            worksheet_ML.write(f'E{j}', customerID["LK"])
             worksheet_ML.write(f'F{j}', '-',minus)
+            worksheet_ML.write(f'G{j}', '-',minus)
+            worksheet_ML.write(f'H{j}', '-',minus)
         s = 1
-        for DandW in DepositAndWithdrawal:
-            s += 1
-            worksheet_DW.write(f'A{s}', Login_utm_dict[str(DandW["Login"])]["utm"])
-            worksheet_DW.write(f'B{s}', Login_utm_dict[str(DandW["Login"])]["fio"])
-            worksheet_DW.write(f'C{s}', Login_utm_dict[str(DandW["Login"])]["lk"])
-            worksheet_DW.write(f'D{s}', DandW["Login"])
-            worksheet_DW.write(f'E{s}', Login_utm_dict[str(DandW["Login"])]["currency"])
-            worksheet_DW.write(f'F{s}', str(str(DandW["TimeMsc"]).split('.')[0]))
-            worksheet_DW.write(f'G{s}', DandW["Balance_before"],number)
-            worksheet_DW.write(f'H{s}', DandW["Profit"],number)
-            if Login_utm_dict[str(DandW["Login"])]["currency"] == 'RUB':
-                worksheet_DW.write(f'I{s}', round(float(1),4))
-                worksheet_DW.write(f'J{s}', round(float(DandW["Balance_before"]),2),number)
-                worksheet_DW.write(f'K{s}', round(float(DandW["Profit"]),2),number)
-            else:
-                worksheet_DW.write(f'I{s}', round(float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),4),rate)
-                worksheet_DW.write(f'J{s}', round(float(DandW["Balance_before"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
-                worksheet_DW.write(f'K{s}', round(float(DandW["Profit"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
+        if login_for_mt5[:-1] != '':
+            for DandW in DepositAndWithdrawal:
+                s += 1
+                worksheet_DW.write(f'A{s}', Login_utm_dict[str(DandW["Login"])]["utm"])
+                worksheet_DW.write(f'B{s}', Login_utm_dict[str(DandW["Login"])]["fio"],wrap_format)
+                worksheet_DW.write(f'C{s}', Login_utm_dict[str(DandW["Login"])]["phone"])
+                worksheet_DW.write(f'D{s}', Login_utm_dict[str(DandW["Login"])]["email"])
+                worksheet_DW.write(f'E{s}', Login_utm_dict[str(DandW["Login"])]["lk"])
+                worksheet_DW.write(f'F{s}', DandW["Login"])
+                worksheet_DW.write(f'G{s}', Login_utm_dict[str(DandW["Login"])]["currency"])
+                worksheet_DW.write(f'H{s}', str(str(DandW["TimeMsc"]).split('.')[0]))
+                worksheet_DW.write(f'I{s}', DandW["Balance_before"],number)
+                worksheet_DW.write(f'J{s}', DandW["Profit"],number)
+                if Login_utm_dict[str(DandW["Login"])]["currency"] == 'RUB':
+                    worksheet_DW.write(f'K{s}', round(float(1),4))
+                    worksheet_DW.write(f'L{s}', round(float(DandW["Balance_before"]),2),number)
+                    worksheet_DW.write(f'M{s}', round(float(DandW["Profit"]),2),number)
+                else:
+                    worksheet_DW.write(f'K{s}', round(float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),4),rate)
+                    worksheet_DW.write(f'L{s}', round(float(DandW["Balance_before"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
+                    worksheet_DW.write(f'M{s}', round(float(DandW["Profit"])*float(currency_dict[Login_utm_dict[str(DandW["Login"])]["currency"]][DandW["date_dw"]]),2),number)
         query = """
                 SELECT
-                CONCAT(ci.last_name_ru,' ',SUBSTRING(ci.first_name_ru,1,1),'.',SUBSTRING(ci.middle_name_ru,1,1),'.') AS 'FIO'
+                CONCAT(ci.last_name_ru,' ',ci.first_name_ru,' ',ci.middle_name_ru) AS 'FIO'
+                , cus.mobile_phone AS 'Phone'
+                , cus.email AS 'Email'
                 , a.customer_id AS 'LK'
                 , pmd.id AS 'Deal'
                 , pmd.mt5_order_id AS 'Order'
@@ -789,6 +825,7 @@ def report_generation(send_info):
                 , UPPER(c.name) AS 'Currency'
                 FROM platform_mt5_deal pmd
                 LEFT JOIN account a ON pmd.login = a.login
+                LEFT JOIN customer cus ON a.customer_id = cus.id
                 LEFT JOIN customer_individual ci ON a.customer_id = ci.customer_id
                 LEFT JOIN currency c ON a.currency_id = c.id
                 LEFT JOIN customer_utm cu ON a.customer_id = cu.customer_id
@@ -805,35 +842,36 @@ def report_generation(send_info):
         for Deal in Deals:
             m += 1
             worksheet_Deals.write(f'A{m}', Deal["UTM"])
-            worksheet_Deals.write(f'B{m}', Deal["FIO"])
-            worksheet_Deals.write(f'C{m}', Deal["LK"])
-            worksheet_Deals.write(f'D{m}', Deal["Login"])
-            worksheet_Deals.write(f'E{m}', Deal["Currency"])
-            worksheet_Deals.write(f'F{m}', Deal["Deal"])
-            worksheet_Deals.write(f'G{m}', Deal["Order"])
-            worksheet_Deals.write(f'H{m}', str(Deal["Time"]))
-            worksheet_Deals.write(f'I{m}', Deal["Action"])
-            worksheet_Deals.write(f'J{m}', Deal["Entry"])
-            worksheet_Deals.write(f'K{m}', Deal["Symbol"])
-            worksheet_Deals.write(f'L{m}', Deal["Volume"], number)
-            worksheet_Deals.write(f'M{m}', Deal["Volume_USD"], number)
-            worksheet_Deals.write(f'N{m}', Deal["Price"],rate)
-            worksheet_Deals.write(f'O{m}', Deal["Reason"])
-            worksheet_Deals.write(f'P{m}', Deal["Dealer"])
-            worksheet_Deals.write(f'Q{m}', Deal["Profit"], number)
-            worksheet_Deals.write(f'R{m}', Deal["CBR"],rate)
-            worksheet_Deals.write(f'S{m}', Deal["Result"], number)
-        query = """
+            worksheet_Deals.write(f'B{m}', Deal["FIO"],wrap_format)
+            worksheet_Deals.write(f'C{m}', Deal["Phone"])
+            worksheet_Deals.write(f'D{m}', Deal["Email"])
+            worksheet_Deals.write(f'E{m}', Deal["LK"])
+            worksheet_Deals.write(f'F{m}', Deal["Login"])
+            worksheet_Deals.write(f'G{m}', Deal["Currency"])
+            worksheet_Deals.write(f'H{m}', Deal["Deal"])
+            worksheet_Deals.write(f'I{m}', Deal["Order"])
+            worksheet_Deals.write(f'J{m}', str(Deal["Time"]))
+            worksheet_Deals.write(f'K{m}', Deal["Action"])
+            worksheet_Deals.write(f'L{m}', Deal["Entry"])
+            worksheet_Deals.write(f'M{m}', Deal["Symbol"])
+            worksheet_Deals.write(f'N{m}', Deal["Volume"], number)
+            worksheet_Deals.write(f'O{m}', Deal["Volume_USD"], number)
+            worksheet_Deals.write(f'P{m}', Deal["Price"],rate)
+            worksheet_Deals.write(f'Q{m}', Deal["Reason"])
+            worksheet_Deals.write(f'R{m}', Deal["Dealer"])
+            worksheet_Deals.write(f'S{m}', Deal["Profit"], number)
+            worksheet_Deals.write(f'T{m}', Deal["CBR"],rate)
+            worksheet_Deals.write(f'U{m}', Deal["Result"], number)
+            query = """
                 SELECT 
-                \"87af\" as 'UTM'
+                \""""+sources_utm[1:-1]+"""\" as 'UTM'
+                ,IF(c.id IS NOT NULL, c.id, IF(c1.id IS NOT NULL, c1.id, 'нет')) AS 'LK'
+                , IF(c.created_at IS NOT NULL, c.created_at, IF(c1.created_at IS NOT NULL, c1.created_at, '-')) AS 'Regestration_date'
                 ,com_parse.Name AS 'FIO'
                 ,com_parse.Phone AS 'Phone'
                 ,com_parse.Email AS 'Email'
-                ,com_parse.communicated_at AS 'Communication_date'
-                ,com_parse.Subject AS 'Subject'
-                , IF(c.id IS NOT NULL, c.id, IF(c1.id IS NOT NULL, c1.id, 'нет')) AS 'LK'
-                , IF(c.created_at IS NOT NULL, c.created_at, IF(c1.created_at IS NOT NULL, c1.created_at, '-')) AS 'Regestration_date'
-                ,com_parse.utm_comment
+                -- ,com_parse.communicated_at AS 'Communication_date'
+                -- ,com_parse.Subject AS 'Subject'
                 FROM 
                 (
                 SELECT c.communicated_at
@@ -842,11 +880,10 @@ def report_generation(send_info):
                 ,substring_index(substring_index(c.comment,' | ',3), ' | ', -1) AS 'Email'
                 ,substring_index(substring_index(c.comment,' | ',4), ' | ', -1) AS 'Subject'
                 ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(substring_index(substring_index(c.comment,' | ',2), ' | ', -1),'+',''),'(',''),')',''),' ',''),'-','') AS 'Phone_clear'
-                ,c.comment as utm_comment
                 FROM communication c 
                 WHERE 
-                c.comment like '%utm_source=87af%'
-                or c.comment like '%p=87af%'
+                c.comment like '%utm_source=paritet%'
+                or c.comment like '%p=paritet%'
                 ) AS com_parse
                 LEFT JOIN customer c ON com_parse.Email = c.email
                 LEFT JOIN customer c1 ON com_parse.Phone_clear = c1.mobile_phone
@@ -859,22 +896,16 @@ def report_generation(send_info):
         for Lead in Leads:
             n += 1
             worksheet_Lead.write(f'A{n}', Lead["UTM"])
-            worksheet_Lead.write(f'B{n}', Lead["FIO"])
-            worksheet_Lead.write(f'C{n}', Lead["Phone"])
-            worksheet_Lead.write(f'D{n}', Lead["Email"])
-            worksheet_Lead.write(f'E{n}', str(Lead["Communication_date"]))
-            worksheet_Lead.write(f'F{n}', Lead["Subject"])
-            worksheet_Lead.write(f'G{n}', Lead["LK"])
-            worksheet_Lead.write(f'H{n}', str(Lead["Regestration_date"]))
-            worksheet_Lead.write(f'I{n}', str(Lead["utm_comment"]))
+            worksheet_Lead.write(f'B{n}', Lead["LK"])
+            worksheet_Lead.write(f'C{n}', str(Lead["Regestration_date"]))
+            worksheet_Lead.write(f'D{n}', Lead["FIO"])
+            worksheet_Lead.write(f'E{n}', Lead["Phone"])
+            worksheet_Lead.write(f'F{n}', Lead["Email"])
     my_connection.close()
     workbook_.close()
-    wb = xl.Workbooks.Open(direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx")
-    wb.Close(True)
     to_return = {}
     to_return["conv_count"] = str(len(convertations))
     to_return["acc_count"] = str(j-1)
     to_return["oper_count"] = str(m-1)
     to_return["reward_count"] = str(len(login_list))
-    to_return["lead_count"] = str(n-1)
     return to_return

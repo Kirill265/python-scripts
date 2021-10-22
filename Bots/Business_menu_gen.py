@@ -14,6 +14,8 @@ from Checked_cust_weekly import Check_client
 from Convertation_weekly import Convert_period
 from USD_14 import PL_14
 from Volume_USD_weekly import Volume_period
+from Deals_count_report import Count_deals
+from Neto_balance_report import Neto_balance
 
 actions_check = OrderedDict([
     ('Проверить все', check_all),
@@ -31,6 +33,8 @@ actions_report = OrderedDict([
     ('Конвертации', Convert_period),
     ('PL по 14 инструментам', PL_14),
     ('Оборот в USD', Volume_period),
+    ('Количество сделок', Count_deals),
+    ('Нетто', Neto_balance),
 ])
 
 actions_net = OrderedDict([

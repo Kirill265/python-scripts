@@ -4,15 +4,12 @@ import calendar
 import datetime
 from datetime import timedelta
 import xlsxwriter
-import openpyxl
 import pymysql
 import psycopg2
 from psycopg2.extras import DictCursor
 from pymysql.cursors import DictCursor
 import time
 from keepass import key_pass
-from win32com import client
-import win32com
 
 def report_generation(send_info):
     agent = send_info["agent"]
@@ -475,10 +472,6 @@ def report_generation(send_info):
                 convertation_dict[str(conv_reward["login"])]["reward"] += -round(float(conv_reward["finrez"])*float(currency_dict[conv_reward["currency"]][conv_reward["conv_date"]])/2,2)
     Postgre_connection.close()
     workbook_sum.close()
-    xl = win32com.client.DispatchEx('Excel.Application')
-    xl.Visible = False
-    wb = xl.Workbooks.Open(direction+agent+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx")
-    wb.Close(True)
     with Postgre_connection_2.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:    
         query = """
                 SELECT mt5a."Login"
@@ -624,7 +617,6 @@ def report_generation(send_info):
          """
         cursor.execute(query)
         PL_all = cursor.fetchall()
-        wb = openpyxl.load_workbook(direction+agent+" рассчёт 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx",data_only=True)
         Login_utm_dict = {}
         j = 1
         for PL_one in PL_all:
@@ -662,13 +654,8 @@ def report_generation(send_info):
             worksheet_Reward.write(f'E{j}', PL_one["Currency"])
             worksheet_Reward.write(f'F{j}', PL_one["Volume_Lots"], number)
             if str(PL_one["Login"]) in login_list:
-                sheet = wb[str(PL_one["Login"])]
-                RewardSelected = sheet.cell(row = 3, column = 22).value
-                in_USD = round(RewardSelected*1000000/20,2)
-                worksheet_Reward.write(f'G{j}', '='+str(in_USD), number)
-                RewardSelected = sheet.cell(row = 3, column = 23).value
-                in_RUB = round(RewardSelected,2)
-                worksheet_Reward.write(f'H{j}', '='+str(in_RUB), number)
+                worksheet_Reward.write(f'G{j}', '=\'['+agent+' рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx]'+str(PL_one["Login"])+'\'!$V$3*1000000/20', number)
+                worksheet_Reward.write(f'H{j}', '=\'['+agent+' рассчёт 01-'+msg_to_day+' '+month+' '+str(report_date.year)+'.xlsx]'+str(PL_one["Login"])+'\'!$W$3', number)
             else:
                 worksheet_Reward.write(f'G{j}', 0.00, number)
                 worksheet_Reward.write(f'H{j}', 0.00, number)
@@ -825,7 +812,7 @@ def report_generation(send_info):
             worksheet_Deals.write(f'S{m}', Deal["Result"], number)
         query = """
                 SELECT 
-                \"87af\" as 'UTM'
+                \""""+sources_utm[1:-1]+"""\" as 'UTM'
                 ,com_parse.Name AS 'FIO'
                 ,com_parse.Phone AS 'Phone'
                 ,com_parse.Email AS 'Email'
@@ -833,7 +820,6 @@ def report_generation(send_info):
                 ,com_parse.Subject AS 'Subject'
                 , IF(c.id IS NOT NULL, c.id, IF(c1.id IS NOT NULL, c1.id, 'нет')) AS 'LK'
                 , IF(c.created_at IS NOT NULL, c.created_at, IF(c1.created_at IS NOT NULL, c1.created_at, '-')) AS 'Regestration_date'
-                ,com_parse.utm_comment
                 FROM 
                 (
                 SELECT c.communicated_at
@@ -842,11 +828,10 @@ def report_generation(send_info):
                 ,substring_index(substring_index(c.comment,' | ',3), ' | ', -1) AS 'Email'
                 ,substring_index(substring_index(c.comment,' | ',4), ' | ', -1) AS 'Subject'
                 ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(substring_index(substring_index(c.comment,' | ',2), ' | ', -1),'+',''),'(',''),')',''),' ',''),'-','') AS 'Phone_clear'
-                ,c.comment as utm_comment
                 FROM communication c 
                 WHERE 
-                c.comment like '%utm_source=87af%'
-                or c.comment like '%p=87af%'
+                c.comment like '%utm_source="""+sources_utm[1:-1]+"""%'
+                or c.comment like '%p="""+sources_utm[1:-1]+"""%'
                 ) AS com_parse
                 LEFT JOIN customer c ON com_parse.Email = c.email
                 LEFT JOIN customer c1 ON com_parse.Phone_clear = c1.mobile_phone
@@ -866,11 +851,8 @@ def report_generation(send_info):
             worksheet_Lead.write(f'F{n}', Lead["Subject"])
             worksheet_Lead.write(f'G{n}', Lead["LK"])
             worksheet_Lead.write(f'H{n}', str(Lead["Regestration_date"]))
-            worksheet_Lead.write(f'I{n}', str(Lead["utm_comment"]))
     my_connection.close()
     workbook_.close()
-    wb = xl.Workbooks.Open(direction+agent+" 01-"+msg_to_day+" "+month+" "+str(report_date.year)+".xlsx")
-    wb.Close(True)
     to_return = {}
     to_return["conv_count"] = str(len(convertations))
     to_return["acc_count"] = str(j-1)

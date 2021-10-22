@@ -825,7 +825,7 @@ def report_generation(send_info):
             worksheet_Deals.write(f'S{m}', Deal["Result"], number)
         query = """
                 SELECT 
-                \"87af\" as 'UTM'
+                \"93af\" as 'UTM'
                 ,com_parse.Name AS 'FIO'
                 ,com_parse.Phone AS 'Phone'
                 ,com_parse.Email AS 'Email'
@@ -845,8 +845,8 @@ def report_generation(send_info):
                 ,c.comment as utm_comment
                 FROM communication c 
                 WHERE 
-                c.comment like '%utm_source=87af%'
-                or c.comment like '%p=87af%'
+                c.comment like '%utm_source=93af%'
+                or c.comment like '%p=93af%'
                 ) AS com_parse
                 LEFT JOIN customer c ON com_parse.Email = c.email
                 LEFT JOIN customer c1 ON com_parse.Phone_clear = c1.mobile_phone

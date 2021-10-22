@@ -1,16 +1,16 @@
 'finexpert','finexpert005',
             'orenburg001',
             'sterlitamak001',
-            'smolensk','smolensk002','smolensk003',
-            'bryansk','bryansk002','bryansk003',
-            'Курск','kursk','kursk002','kursk003',
+            'smolensk','smolensk002','smolensk003', 'sm6702', 'sm6202', 'sm6703', 
+            'bryansk','bryansk002','bryansk003', 'br3202', 'br3203', 'bel3103',
+            'Курск','kursk','kursk002','kursk003', 'kur4603', 'kur4602',
             'belgorod','belgorod002','belgorod003',
             'rostov','rostov002','rostov003',
-            'voronezh','voronezh002','voronezh002','voronezh003',
-            'kazan','kazan002','kazan003',
-            'ulianovsk','ulianovsk002','ulianovsk003',
+            'voronezh','voronezh002','voronezh002','voronezh003', 'vor3603', 'vor3602', 
+            'kazan','kazan002','kazan003', 'kaz2101', 
+            'ulianovsk','ulianovsk002','ulianovsk003', 'ul7302', 
             'toliatti','toliatti002','toliatti003',
-            'samara','samara002','samara003',
+            'samara','samara002','samara003', 'sam6313', 'sam6303', 
             'ekaterinburg','ekaterinburg002','ekaterinburg003',
             'norilsk','norilsk002','norilsk003',
             'novosibirsk','novosibirsk002','novosibirsk003',
@@ -18,13 +18,12 @@
             'Ufa','Ufa001','Ufa002','Ufa003',
             'ufa004','ufa005','ufa006','ufa007','ufa008',
             'pt001','pt002','pt003','pt004','pt005',
-            'Vil','Ya001','fxlux',
-	'tlt3713','tlt7312','tlt7313','tlt6312','tlt7315','tlt3103',
-	'krk2402','krk3196',
-	'br3202','br3203',
-	'sm6202','sm6702','sm6703',
-	'vor3602','vor3603',
-	'kur4602','kur4603',
-	'sam6303','sam6313',
-	'kaz2101','ul7302','eco',
-'alp'
+            'Vil','Ya001','fxlux','tlt7312', 
+            'krk2402', 'krk3196', 
+            'tlt7313', 'tlt3713', 'tlt6312', 'tlt7315',
+			'eco', 'alp', 'min', 'dr3202', 'nsk5401', 'sml6704', 'krsk888', 'dg', 'dy', 'vrn3606', 'msk5404'
+ 
+
+
+
+
