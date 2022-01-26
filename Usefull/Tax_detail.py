@@ -25,7 +25,6 @@ class Form(QMainWindow):
 
 def wthdrwl_date(order, date_list):
     for i in date_list:
-        print(i+'\t'+order)
         if i > order:
             return i
     return order
@@ -48,13 +47,22 @@ for History_file in getHistory:
     period_start.append(history["Unnamed: 3"][2].split("-")[0].replace(".","-"))
     period_end.append(history["Unnamed: 3"][2].split("-")[1].replace(".","-"))
     i = 0
-    for deal in history["Trade History Report"]:
-        i += 1
-        if deal == "Deals":
-            start = i
-        elif deal == "Balance:" or deal == "Open Positions":
-            end = i-2
-            break
+    if "Trade History Report" in history:
+        for deal in history["Trade History Report"]:
+            i += 1
+            if deal == "Deals":
+                start = i
+            elif deal == "Balance:" or deal == "Open Positions":
+                end = i-2
+                break
+    elif "Отчет торговой истории" in history:
+        for deal in history["Отчет торговой истории"]:
+            i += 1
+            if deal == "Сделки":
+                start = i
+            elif deal == "Баланс:" or deal == "Открытые позиции":
+                end = i-2
+                break
     history_deal = history[start:end]
     login_list = ["Торговый счет"]
     currency_list = ["Валюта"]
@@ -69,12 +77,12 @@ for History_file in getHistory:
     else:
         Deals = history_deal
 
+getOPRDS = explorer.getfile('Выберите файл с операциями прихода / расхода ДС','Excel (*.xls)')[0]
+
 if 'USD' in currencies or 'EUR' in currencies:
     getCBR = explorer.getfile('Выберите файлы с котировками ЦБ','Excel (*.xlsx)')[0]
-    getOPRDS = explorer.getfile('Выберите файл с операциями прихода / расхода ДС','Excel (*.xls)')[0]
 else:
     getCBR = []
-    getOPRDS = []
 result_dir = explorer.direct("Укажите путь для сохранения")+'/'
 result_dir = os.path.join(result_dir, 'TaxDetail_result')
 if not os.path.exists(result_dir):
@@ -107,6 +115,7 @@ for CBR_file in getCBR:
 swap_rates_USD = pd.DataFrame(columns=['Дата свопа','курс'])
 swap_rates_EUR = pd.DataFrame(columns=['Дата свопа','курс'])
 cliring_date = pd.DataFrame(columns=['Дата операции','Дата исполнения'])
+withdrawal_date = pd.DataFrame(columns=['Дата исполнения'])
 for OPRDS_file in getOPRDS:
     oprds = pd.read_excel(OPRDS_file)
     swap_rates_USD = oprds.loc[(oprds['Вид сделки/операции'] == 'Комиссия за своп в валюте')&(oprds['Валюта'] == 'USD')&(oprds['%'] == '100 %'), ['Примечание']]
@@ -117,6 +126,7 @@ for OPRDS_file in getOPRDS:
         swap_rates_USD = pd.concat([swap_rates_USD_date[2],swap_rates_USD_tick[2]],axis=1)
         swap_rates_USD.columns=['Дата свопа','курс']
         swap_rates_USD.sort_values(by='Дата свопа')
+        swap_rates_USD['курс'] = swap_rates_USD['курс'].astype('float')
     
     swap_rates_EUR = oprds.loc[(oprds['Вид сделки/операции'] == 'Комиссия за своп в валюте')&(oprds['Валюта'] == 'EUR')&(oprds['%'] == '100 %'), ['Примечание']]
     if not swap_rates_EUR.empty:
@@ -126,6 +136,7 @@ for OPRDS_file in getOPRDS:
         swap_rates_EUR = pd.concat([swap_rates_EUR_date[2],swap_rates_EUR_tick[2]],axis=1)
         swap_rates_EUR.columns=['Дата свопа','курс']
         swap_rates_EUR.sort_values(by='Дата свопа')
+        swap_rates_EUR['курс'] = swap_rates_EUR['курс'].astype('float')
     
     cliring_date = oprds.loc[(oprds['Тип плана исполнения'] == 'Финансовый результат')&(oprds['Валюта'] != 'RUB')&(oprds['%'] == '100 %'), ['Дата операции','Дата исполнения']]
     if not cliring_date.empty:
@@ -135,12 +146,6 @@ for OPRDS_file in getOPRDS:
     withdrawal_date = oprds.loc[(oprds['Вид сделки/операции'] == 'Приход/Расход ДС - внешний (ЭЦП)')&(oprds['%'] == '100 %'), ['Дата исполнения']]
     if not withdrawal_date.empty:
         withdrawal_date = withdrawal_date.drop_duplicates(['Дата исполнения'], keep='first')
-        '''
-        withdrawal_date = withdrawal_date['Дата исполнения'].str.split('.',expand=True)
-        withdrawal_correctdate = withdrawal_date[2]+withdrawal_date[1]+withdrawal_date[0]
-        withdrawal_correctdate.columns=['Дата исполнения']
-        withdrawal_correctdate.sort_values(by='Дата исполнения')
-        '''
         withdrawal_date_list = withdrawal_date['Дата исполнения'].values.tolist()
         new_date_list = []
         for withdrawal in withdrawal_date_list:
@@ -150,19 +155,38 @@ for OPRDS_file in getOPRDS:
 
 Deals.columns = Deals.iloc[0]
 
-for (idx, deal) in Deals.iterrows():
-    if 'Withdrawal' in str(deal.loc['Comment']):
-        if withdrawal_date.empty:
-            old_time = datetime.strptime(str(deal.loc['Time']), '%Y.%m.%d %H:%M:%S')
-            new_time = old_time + timedelta(days=1)
-        else:
-            old_time = str(deal.loc['Time']).split(' ')[0]
-            new_time = wthdrwl_date(old_time,new_date_list)
-        deal.loc['Time'] = str(new_time).split(" ")[0].replace("-",".")+' 00:00:00'
-    elif 'Rollover commission' in str(deal.loc['Comment']):
-        deal.loc['Time'] = str(deal.loc['Comment']).split(".")[2]+'.'+str(deal.loc['Comment']).split(".")[1]+'.'+str(deal.loc['Comment']).split(".")[0].split(" ")[-1]+' 23:59:59'
-
-Deals = Deals.iloc[1:].sort_values('Time')
+if 'Comment' in Deals:
+    for (idx, deal) in Deals.iterrows():
+        if 'Withdrawal' in str(deal.loc['Comment']):
+            if withdrawal_date.empty:
+                old_time = datetime.strptime(str(deal.loc['Time']), '%Y.%m.%d %H:%M:%S')
+                new_time = old_time + timedelta(days=1)
+            else:
+                old_time = str(deal.loc['Time']).split(' ')[0]
+                new_time = wthdrwl_date(old_time,new_date_list)
+                if old_time == new_time:
+                    old_time = datetime.strptime(str(deal.loc['Time']), '%Y.%m.%d %H:%M:%S')
+                    new_time = old_time + timedelta(days=1)
+            deal.loc['Time'] = str(new_time).split(" ")[0].replace("-",".")+' 00:00:00'
+        elif 'Rollover commission' in str(deal.loc['Comment']):
+            deal.loc['Time'] = str(deal.loc['Comment']).split(".")[2]+'.'+str(deal.loc['Comment']).split(".")[1]+'.'+str(deal.loc['Comment']).split(".")[0].split(" ")[-1]+' 23:59:59'
+    Deals = Deals.iloc[1:].sort_values('Time')
+elif 'Комментарий' in Deals:
+    for (idx, deal) in Deals.iterrows():
+        if 'Withdrawal' in str(deal.loc['Комментарий']):
+            if withdrawal_date.empty:
+                old_time = datetime.strptime(str(deal.loc['Время']), '%Y.%m.%d %H:%M:%S')
+                new_time = old_time + timedelta(days=1)
+            else:
+                old_time = str(deal.loc['Время']).split(' ')[0]
+                new_time = wthdrwl_date(old_time,new_date_list)
+                if old_time == new_time:
+                    old_time = datetime.strptime(str(deal.loc['Время']), '%Y.%m.%d %H:%M:%S')
+                    new_time = old_time + timedelta(days=1)
+            deal.loc['Время'] = str(new_time).split(" ")[0].replace("-",".")+' 00:00:00'
+        elif 'Rollover commission' in str(deal.loc['Комментарий']):
+            deal.loc['Время'] = str(deal.loc['Комментарий']).split(".")[2]+'.'+str(deal.loc['Комментарий']).split(".")[1]+'.'+str(deal.loc['Комментарий']).split(".")[0].split(" ")[-1]+' 23:59:59'
+    Deals = Deals.iloc[1:].sort_values('Время')
 
 date_list = []
 rates_list = []
@@ -297,3 +321,4 @@ with pd.ExcelWriter(result_dir+'/Налог '+fio.split(" ")[0]+' '+max(period_e
     if 'USD' in currencies or 'EUR' in currencies:
         cliring_date.to_excel(writer,index=False,header=True, sheet_name = 'дата исполнения финреза')
 
+explorer.inform('Tax detailed','Готово!\n'+result_dir+'/Налог '+fio.split(" ")[0]+' '+max(period_end).split("-")[0]+' .xlsx')

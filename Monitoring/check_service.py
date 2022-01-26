@@ -26,9 +26,13 @@ site_for_check=["alfaforex.ru",
                 "my.alfaforex.ru/login",
                 "office.alfaforex.ru/login",
                 "agent.alfaforex.ru/login",
-                "team.alfaforex.com","tw.alfaforex.ru",
-                "alfaforex.ru/chat"]
-all_site_for_check=site_for_check+["alfaforex.ru/trading-terms",
+                #"tw.alfaforex.ru",
+                "team.alfaforex.com"]
+
+if __name__ == '__main__':
+    all_site_for_check=["office.alfaforex.ru/login"]
+else:
+    all_site_for_check=site_for_check+["alfaforex.ru/trading-terms",
                                    "alfaforex.ru/deposit-withdrawal",
                                    "alfaforex.ru/online-trading",
                                    "alfaforex.ru/metatrader",

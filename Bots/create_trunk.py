@@ -162,6 +162,7 @@ def customer_trunk(botName='',userName='',userId=''):
             customer_lk = cursor.fetchone()
         result["id"] = customer_id
         result["lk"] = str(customer_lk["login"])
+        result["phone"] = str(Phone[1:])
         #print(result["id"])
         #print(result["lk"])
         #print(stdout.read())

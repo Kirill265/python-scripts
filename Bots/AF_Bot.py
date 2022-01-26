@@ -1,5 +1,6 @@
 import sys
 import os
+import threading
 import shutil
 import json
 import requests
@@ -14,6 +15,7 @@ from keepass import key_pass
 from sms_parcing import parsing_trunk, parsing_rc
 from create_trunk import customer_trunk
 from check_service import check_site, site_for_check
+from sms_registrator import sms_for_login
 
 path_staff = os.path.dirname(os.path.abspath(__file__))+'\\'+"bot_afr_staff_id.json"
 path_guest = os.path.dirname(os.path.abspath(__file__))+'\\'+"bot_afr_guest_id.json"
@@ -33,6 +35,10 @@ def send_welcome(message):
     if len(data_staff["selectonly"]) != 0:
         for i in data_staff["selectonly"]:
             selectonly_list.append(i["id"])
+    smsonly_list = []
+    if len(data_staff["smsonly"]) != 0:
+        for i in data_staff["smsonly"]:
+            smsonly_list.append(i["id"])
     #For SUPERUSER
     if message.chat.id in superuser_list:
         keyboard = types.ReplyKeyboardMarkup(True,False)
@@ -43,6 +49,11 @@ def send_welcome(message):
     elif message.chat.id in selectonly_list:
         keyboard = types.ReplyKeyboardMarkup(True,False)
         keyboard.add('Получить код из SMS','Генератор тест-данных')
+        send = bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}!\nВыбери действие.',reply_markup=keyboard)
+    # For SMSONLY
+    elif message.chat.id in smsonly_list:
+        keyboard = types.ReplyKeyboardMarkup(True, False)
+        keyboard.add('Получить код из SMS')
         send = bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}!\nВыбери действие.',reply_markup=keyboard)
     #For GUEST
     else:
@@ -72,6 +83,10 @@ def get_text_messages(message):
     if len(data_staff["selectonly"]) != 0:
         for i in data_staff["selectonly"]:
             selectonly_list.append(i["id"])
+    smsonly_list = []
+    if len(data_staff["smsonly"]) != 0:
+        for i in data_staff["smsonly"]:
+            smsonly_list.append(i["id"])
     #For SUPERUSER
     if message.chat.id in superuser_list:
         if "меню" in message.text.lower():
@@ -98,7 +113,10 @@ def get_text_messages(message):
             else:
                 bot.send_message(message.chat.id, '`'+answer+'`', parse_mode= 'MarkdownV2')
         elif "создать клиента" in message.text.lower():
-            customer(message)
+            phone = customer(message)
+            if phone != '':
+                x = threading.Thread(target=new_client_sms, args=[message, phone], daemon=True).start()
+                #new_client_sms(message, phone)
         else:
             bot.send_message(message.from_user.id, "Напиши \"меню\"")
         '''
@@ -153,6 +171,18 @@ def get_text_messages(message):
                 bot.send_message(message.chat.id, '`'+answer+'`', parse_mode= 'MarkdownV2')
         else:
             bot.send_message(message.from_user.id, "Напиши \"меню\"")
+    # For SMSONLY
+    elif message.chat.id in smsonly_list:
+        if "меню" in message.text.lower():
+            keyboard = types.ReplyKeyboardMarkup(True, False)
+            keyboard.add('Получить код из SMS')
+            send = bot.send_message(message.chat.id, f'Выбери действие', reply_markup=keyboard)
+        elif message.text.lower() == "привет":
+            bot.send_message(message.chat.id, 'Привет!')
+        elif "код из sms" in message.text.lower():
+            smska(message)
+        else:
+            bot.send_message(message.from_user.id, "Напиши \"меню\"")
     #For GUEST
     else:
         send = bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}!\nТвой id: `{message.from_user.id}`', parse_mode= 'Markdown')
@@ -176,6 +206,7 @@ def smska(message):
     msg = parsing_trunk()
     bot.send_message(message.chat.id, msg, parse_mode= 'Markdown')
 def customer(message):
+    phone = ''
     try:
         result = customer_trunk(key_pass(bot_name).username,message.from_user.username,message.from_user.id)
         if result["error"]!='':
@@ -187,10 +218,31 @@ def customer(message):
             msg += 'CRM:\t['+result["lk"]+'](https://office.trunk.alfaforex.dom/customer/'+result["lk"]+')\n'
             msg += 'ФИО:\t'+result["fio"]+'\n'
             msg += 'ID:\t`'+result["id"]+'`'
+            phone = result["phone"]
         bot.send_message(message.chat.id, msg, parse_mode= 'Markdown',disable_web_page_preview = True)
+        return phone
     except:
         msg = 'Что-то пошло не так.\n\n'
         msg += 'Ошибка в функции *customer*\n'
+        msg += '[Сообщи об ошибке.](https://t.me/Kirill_Cherkasov)'
+        bot.send_message(message.chat.id, msg, parse_mode= 'Markdown',disable_web_page_preview = True)
+        return phone
+def new_client_sms(message,phone):
+    try:
+        result = sms_for_login(phone)
+        if result["error"]!='':
+            return
+            msg = 'Что-то пошло не так.\n\n'
+            msg += result["error"]+'\n'
+            msg += result["error_msg"]
+        else:
+            msg = 'SMS:\n\n'
+            msg += result["text"]
+        bot.send_message(message.chat.id, msg, parse_mode= 'Markdown',disable_web_page_preview = True)
+    except:
+        return
+        msg = 'Что-то пошло не так.\n\n'
+        msg += 'Ошибка в функции *new_client_sms*\n'
         msg += '[Сообщи об ошибке.](https://t.me/Kirill_Cherkasov)'
         bot.send_message(message.chat.id, msg, parse_mode= 'Markdown',disable_web_page_preview = True)
 bot.polling(none_stop=True, interval=0)

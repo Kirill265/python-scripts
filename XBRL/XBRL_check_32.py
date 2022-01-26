@@ -418,7 +418,7 @@ with open(getXBRL,'r',encoding='utf-8') as f_orig:
                             error_list += context_ref + ":\tНекорректный показатель " + name + ":\t" + znach + "\n"
                     elif name == 'Osnispobyaz':
                         Osnispobyaz_num += 1
-                        if not re.fullmatch(r'Решение единственного участника ООО "Альфа-Форекс" от \d{2} сентября \d{4} года', znach):
+                        if not re.fullmatch(r'Решение единственного участника ООО "Альфа-Форекс" от \d{1,2} (?:августа|сентября) \d{4} года', znach):
                             error_list += context_ref + ":\tНекорректный показатель " + name + ":\t" + znach + "\n"
                     elif name == 'Osnispobyazkontr':
                         Osnispobyazkontr_num += 1
