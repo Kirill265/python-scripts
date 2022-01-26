@@ -139,7 +139,6 @@ bucket/
 # Keys
 *.kdbx
 *not_password.txt
-*111.txt
 *keepass.py
 *bot_staff_id.json
 *bot_guest_id.json
