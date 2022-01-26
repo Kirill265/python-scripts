@@ -2,6 +2,6 @@ git config core.autocrlf true
 
 git config --global http.sslVerify false
 
-git remote set-url origin https://github.com/Kirill265/Python_scripts.git
+git remote set-url origin https://github.com/Kirill265/python-scripts.git
 
 git remote set-url origin https://bitbucket.alfaforex.dom/scm/dp/python-scripts.git
